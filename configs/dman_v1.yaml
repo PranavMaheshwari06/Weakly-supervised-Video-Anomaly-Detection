@@ -1,0 +1,17 @@
+project:
+  version: dman_v1
+
+data:
+  dataset_root: data/ucf_crime
+  raw_dir: data/ucf_crime/raw
+  splits_dir: data/ucf_crime/splits
+  artifacts_dir: data/ucf_crime/artifacts/dman_v21
+
+video:
+  fps_target: 15
+  clip_len: 16
+  stride: 8
+  resize: 224
+
+repro:
+  seed: 42

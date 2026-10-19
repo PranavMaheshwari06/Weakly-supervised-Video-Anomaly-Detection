@@ -1,0 +1,405 @@
+{
+  "protocol_id": "temporal_system_v1",
+  "status": "frozen_before_official_evaluation",
+  "freeze_date": "2026-09-19",
+  "branch": "experiment/dispatch-reproducibility",
+  "head": "64e6cb45e055aea1921a4e65a738be45e7da2a30",
+  "changes_uncommitted": true,
+  "checkpoint_selection": "all three official original validation-selected checkpoints; no ablations; no ensemble",
+  "checkpoints": [
+    {
+      "run_tag": "dispatch_repro_s1337",
+      "training_seed": 1337,
+      "selected_epoch": 34,
+      "checkpoint": "artifacts/stage2/runs/dispatch_repro_s1337/checkpoints/mil_best.pt",
+      "sha256": "95e04b0a1ca35ef859b6511c3eb86e706b24fa2e95126e8f528c16a3ef8a69c3",
+      "resolved_config": "artifacts/stage2/runs/dispatch_repro_s1337/resolved_config.yaml",
+      "resolved_config_sha256": "9ffd0272e7535e1626474be998b97d3147423c173b18a4ecad7e8b66cd653b56"
+    },
+    {
+      "run_tag": "dispatch_repro_s2027",
+      "training_seed": 2027,
+      "selected_epoch": 0,
+      "checkpoint": "artifacts/stage2/runs/dispatch_repro_s2027/checkpoints/mil_best.pt",
+      "sha256": "7473fef046ac8cc8bfd9e4b5693844b8ecf113b7496a714303d4190f9d960bcb",
+      "resolved_config": "artifacts/stage2/runs/dispatch_repro_s2027/resolved_config.yaml",
+      "resolved_config_sha256": "ecbcab202b0b091ff9cc70b6d7deb42fa41a2f3d84511ad7ebf71dcb19b483c3"
+    },
+    {
+      "run_tag": "dispatch_repro_s3407",
+      "training_seed": 3407,
+      "selected_epoch": 25,
+      "checkpoint": "artifacts/stage2/runs/dispatch_repro_s3407/checkpoints/mil_best.pt",
+      "sha256": "6de4b613a013ae5c4f5e39845298c0b1801db9240d8685913a2ab9d5eba3fe16",
+      "resolved_config": "artifacts/stage2/runs/dispatch_repro_s3407/resolved_config.yaml",
+      "resolved_config_sha256": "48fc20d2a00d300c6c03dbf45de7cb63c542c83b8227af032d72338c7eaed0a9"
+    }
+  ],
+  "input_hashes": {
+    "data/ucf_crime/artifacts/dman_v21/clip_index/videos.jsonl": "dfb7fab0ef6dc5e155f1a14dbedd9b30d391a87dd9515f70fc77d0a7aae96bac",
+    "data/ucf_crime/annotations/Temporal_Anomaly_Annotation_For_Testing_Videos/Txt_formate/Temporal_Anomaly_Annotation.txt": "3b9542413f2ed9e94f73bf0488c151b3d7d595a8d2ad30f524e9243a2ae2a17c",
+    "data/ucf_crime/annotations/Temporal_Anomaly_Annotation_For_Testing_Videos/ReadMe.docx": "c4ae61b734fbe9110b8d351a2a1e9255efa529b5053458842e9dbb70dd4940de",
+    "artifacts/stage2/bag_manifests/dispatch_lora_fixed_test.json": "9cddad6d40e9efe8f11c51982199ea1a2056a1c5be6131b4d4df083a37fc4041",
+    "data/ucf_crime/splits/dman_v21/test.txt": "afcb2a6bffe7286607e08c864425964d8784cbd5b1f263e03b76025e11548de7",
+    "data/ucf_crime/splits/dman_v21/val.txt": "d9a0edcbf3d38b1e4a43dc6db38b354ef22dbce21aaa28e93bdd4756223f1bcd",
+    "artifacts/stage1b/checkpoints/lora_best.pt": "2660d47b5a83f726039ec2eeb265a5a8cf08eac6d3f5dbd78ecbf552bc2d6df9",
+    "artifacts/stage2/memory_lora/global_prototypes_k100.pt": "d47f04d8a7184423473189a7669e6ff71f3bea9335aa7fb923c8c89883dbd31d",
+    "artifacts/stage2/teacher/teacher_scores_test.pt": "0dbf85a9ce4f87dd4e2084276e50380fbbede9a538ab1018d6bf04c68b483111",
+    "artifacts/stage2/evidence/teacher_ablation_v1/summary.json": "edd6bda5065a1dea085a884f46ea5d81e79c0109796d9a266c1ee62819b89798",
+    "artifacts/stage2/runs/dispatch_repro_s1337/checkpoints/mil_best.pt": "95e04b0a1ca35ef859b6511c3eb86e706b24fa2e95126e8f528c16a3ef8a69c3",
+    "artifacts/stage2/runs/dispatch_repro_s1337/resolved_config.yaml": "9ffd0272e7535e1626474be998b97d3147423c173b18a4ecad7e8b66cd653b56",
+    "artifacts/stage2/runs/dispatch_repro_s1337/run_manifest.json": "221f2c58f61dd0b8d5017f589e75ec850dcb730c1c15e726ebd7b6de9baa4a85",
+    "artifacts/stage2/runs/dispatch_repro_s2027/checkpoints/mil_best.pt": "7473fef046ac8cc8bfd9e4b5693844b8ecf113b7496a714303d4190f9d960bcb",
+    "artifacts/stage2/runs/dispatch_repro_s2027/resolved_config.yaml": "ecbcab202b0b091ff9cc70b6d7deb42fa41a2f3d84511ad7ebf71dcb19b483c3",
+    "artifacts/stage2/runs/dispatch_repro_s2027/run_manifest.json": "821e77378efcee6653f6ebc2a7b2a1e3789f2c1fbc270880e4491459a591eef3",
+    "artifacts/stage2/runs/dispatch_repro_s3407/checkpoints/mil_best.pt": "6de4b613a013ae5c4f5e39845298c0b1801db9240d8685913a2ab9d5eba3fe16",
+    "artifacts/stage2/runs/dispatch_repro_s3407/resolved_config.yaml": "48fc20d2a00d300c6c03dbf45de7cb63c542c83b8227af032d72338c7eaed0a9",
+    "artifacts/stage2/runs/dispatch_repro_s3407/run_manifest.json": "180e8ab234436b3d2efca83af2c61ea879ca3006f3e630dc474e020883b2ef86"
+  },
+  "sparse_feature_identity": {
+    "root": "data/ucf_crime/artifacts/dman_v21/features_lora",
+    "split": "test",
+    "files": [
+      {
+        "path": "global_test_shard_000.pt",
+        "sha256": "64c710d84f34687b9233d0025c3da4dc0b9d60b38e64ec99f6c66533e143d2d0"
+      },
+      {
+        "path": "global_test_shard_001.pt",
+        "sha256": "7db6b362e76f92143cb557f5a7b2a1c063c3286b75ded8a1d1e629737538a749"
+      },
+      {
+        "path": "global_test_shard_002.pt",
+        "sha256": "4966cc8c848a04eba9311c2239e412a49fb01160b3e4d5ed270663dc8732c4d9"
+      },
+      {
+        "path": "global_test_shard_003.pt",
+        "sha256": "9593cd2c478cdded6118e7b31876b732284db98458553dcdec3ba1ed0b29283a"
+      },
+      {
+        "path": "global_test_shard_004.pt",
+        "sha256": "0a8c0107876d01475afb890794bad5186283b9f9c6dcdd3dd49538d4952e2605"
+      },
+      {
+        "path": "global_test_shard_005.pt",
+        "sha256": "88f0e4e52bff3e1922b013431105497ed06b3640bb45769a6cc9dc66871c6cc4"
+      },
+      {
+        "path": "global_test_shard_006.pt",
+        "sha256": "9b56f39f4452f90c45091814686b1bdd32175a8c05f161fabe322c410a23b48c"
+      },
+      {
+        "path": "global_test_shard_007.pt",
+        "sha256": "0d7419a885d222b0c68bc6e28a67da65d24cdec5fb03ea1475beb56277396146"
+      },
+      {
+        "path": "global_test_shard_008.pt",
+        "sha256": "59fbdf0229159cc83f67d242221ef3add0f375c6d0dde6eea8c98d794694fa4a"
+      },
+      {
+        "path": "global_test_shard_009.pt",
+        "sha256": "65463df37f62a8fc48471f062064903235303aed2c8769d294c9e81f0c710f2f"
+      },
+      {
+        "path": "global_test_shard_010.pt",
+        "sha256": "0a33f164f955266b89c7ace142f050632ba90293b75b6fd8b8a01b8c0e1c8471"
+      },
+      {
+        "path": "global_test_shard_011.pt",
+        "sha256": "c76b29f05956b5dd6b6c932cf3881aa39de27d163f9a30968fbe84289065a8dd"
+      },
+      {
+        "path": "global_test_shard_012.pt",
+        "sha256": "13f465b12e628f83d1a6ee92d2d66906cbdf62eaf3dc6874645e56f91c651d8a"
+      },
+      {
+        "path": "global_test_shard_013.pt",
+        "sha256": "c3429e995db9c142f23339e9d0a48aaef3350fd14e7d59eef3ecd1af37059348"
+      },
+      {
+        "path": "global_test_shard_014.pt",
+        "sha256": "aad69b56f2f7e6a176dad4ee994b27b12ed15a5555e32f47af836bab9e7410bc"
+      },
+      {
+        "path": "global_test_shard_015.pt",
+        "sha256": "4b66267ddca2d9db4a3f5868b864fc2afb2aa027f908b32959f157caa9eff1bc"
+      },
+      {
+        "path": "global_test_shard_016.pt",
+        "sha256": "d6d89265804f5cdde1b33ba5561381e7e90a82bd561d55e5ae7810983b2faa86"
+      },
+      {
+        "path": "global_test_shard_017.pt",
+        "sha256": "04ef858c552ab231a64179664b54664eec1edcb67524e4903aa8e66b070238e7"
+      },
+      {
+        "path": "global_test_shard_018.pt",
+        "sha256": "b61ba9258cd86d82cbadd1ed491d72d3900e05dbde1e498dff40921fa362e2c6"
+      },
+      {
+        "path": "global_test_shard_019.pt",
+        "sha256": "70e86a7a584f05dfa108b0a7c6699e6e9ac02817cd35096fb8a85d5de85972ba"
+      },
+      {
+        "path": "global_test_shard_020.pt",
+        "sha256": "98ff65e8bf29d2a7a632bfe690acfae0f3384e808556ecbe14f0c790f881502c"
+      },
+      {
+        "path": "global_test_shard_021.pt",
+        "sha256": "61ff45819b6d49ad2cd88e211c606adf3908c0342a9dec11f9b200ce6554ee18"
+      },
+      {
+        "path": "global_test_shard_022.pt",
+        "sha256": "3181792ff9cf7c3a248d50af6a1dd763b8e166b19324ecfaf963659182e844f3"
+      },
+      {
+        "path": "global_test_shard_023.pt",
+        "sha256": "198b2e3e50f92672fa7fc54b30e95ea953231c9d4e616c4e05ae43c338144f0d"
+      },
+      {
+        "path": "global_test_shard_024.pt",
+        "sha256": "4a940863135c77bc92aac740554c72611f4007d2f0e591f1d2af04d5e0843263"
+      },
+      {
+        "path": "global_test_shard_025.pt",
+        "sha256": "56fec6812fa8ddf20253d77f539e6654a4d4a962ce614071d780faf4fc09f279"
+      },
+      {
+        "path": "global_test_shard_026.pt",
+        "sha256": "311d8ecbbfb3bc1813e9bbea4e2e11dc6ad4b2797fc24a0c1d3be60e0597b74e"
+      },
+      {
+        "path": "global_test_shard_027.pt",
+        "sha256": "622ba91309bac0fdf481babfe2e320af355b5f6d574488f10657edcbad31501c"
+      },
+      {
+        "path": "global_test_shard_028.pt",
+        "sha256": "42780ed9678a2686a02971c2e2d8edae7fab6a4527c7b3038f916c848024e675"
+      },
+      {
+        "path": "global_test_shard_029.pt",
+        "sha256": "8323953f1c9a4c8a6ff2555a4478b5c2752db305e8a5c942a20035022872a26c"
+      },
+      {
+        "path": "global_test_shard_030.pt",
+        "sha256": "7c68596888bd601bef513d5ab34c29fbf41da505395e416583759a0eaae9c456"
+      },
+      {
+        "path": "global_test_shard_031.pt",
+        "sha256": "db0b157c794129b748b11f3e15b46ff0824a2f487b64dcf1451d75a4cb59fb23"
+      },
+      {
+        "path": "global_test_shard_032.pt",
+        "sha256": "574bfb12cf22b4fbb635233302e83e6479375ba6bff3d13368de096cffad5224"
+      },
+      {
+        "path": "global_test_shard_033.pt",
+        "sha256": "f89791e054c1d6aa9084d491cf19965e35a6e0572c6d078dfefcb9ef49937b54"
+      },
+      {
+        "path": "global_test_shard_034.pt",
+        "sha256": "7ea300e5d746abab1ca8bfcbb15c037374a1382cb27216052c33e490a1b35539"
+      },
+      {
+        "path": "global_test_shard_035.pt",
+        "sha256": "0c10d41d57ee3752606b9dbca1f5097f8704585c4e5e26c6fec3704ef4034720"
+      },
+      {
+        "path": "global_test_shard_036.pt",
+        "sha256": "4f146d9bb0b4192660d595d2b3f0f0df8a9db1c914b028780cb9ff982edadbbb"
+      },
+      {
+        "path": "global_test_shard_037.pt",
+        "sha256": "6b9b1797147387c3eda8477197b3195c6999d1f36da5cdeb77ee1b11ad1591e8"
+      },
+      {
+        "path": "global_test_shard_038.pt",
+        "sha256": "afc2df8ce81479f8188dc4159d68c4732eafded355efc8077c59b7813153c234"
+      },
+      {
+        "path": "global_test_shard_039.pt",
+        "sha256": "3dcb364784bb8325b2d51cf36436c1639a347de64c49964aab4eff650b7f85c7"
+      },
+      {
+        "path": "global_test_shard_040.pt",
+        "sha256": "379f5045043cdd518a14b34b6205ccf2b07168b1196b077533ea6af20d9c20e0"
+      },
+      {
+        "path": "global_test_shard_041.pt",
+        "sha256": "946f0f27987ff5f4899ea1216192983144b0dccb935ab81da1cfce2d50b20193"
+      },
+      {
+        "path": "global_test_shard_042.pt",
+        "sha256": "3f053ad63a7a574146a346b36675c92f61bd080e26c22964f0c3b2f531c29ecb"
+      },
+      {
+        "path": "global_test_shard_043.pt",
+        "sha256": "edab467727706214db6c71098433fb097fba9bb0379973c1bb18ab75664f1376"
+      },
+      {
+        "path": "global_test_shard_044.pt",
+        "sha256": "ddd8fdaf7ad3bdd500cc7551660c6535ea4df23e215ff55240473fff5b05fb86"
+      },
+      {
+        "path": "global_test_shard_045.pt",
+        "sha256": "f03c8b6124bf5327a0e2e7828e9278124cc8a349f2ec8207a7e0fb4381e2e49b"
+      },
+      {
+        "path": "global_test_shard_046.pt",
+        "sha256": "153dc45252a8db8d28177435ab3ad3b2d131e976c21b37c56b50d66bcf838615"
+      },
+      {
+        "path": "global_test_shard_047.pt",
+        "sha256": "1e5810e2903936d6ed18b45920d27eb7125f5f740eb712952b710ce58f6c1b33"
+      },
+      {
+        "path": "global_test_shard_048.pt",
+        "sha256": "29cc9f33c2ec0e9af48f1bceefca1854dbddd7e14298ce59cc3007bbc5044f03"
+      }
+    ],
+    "identity_sha256": "96c4902ee26454a4facb405252342af309b03e3140252b3e4bdc742423d5cc36"
+  },
+  "evaluation_population": {
+    "split": "test",
+    "videos": 290,
+    "anomaly": 140,
+    "normal": 150,
+    "temporal_eligible_anomaly": 135,
+    "temporal_excluded": [
+      "Arson/Arson011_x264.mp4",
+      "Arson/Arson016_x264.mp4",
+      "Explosion/Explosion033_x264.mp4",
+      "Fighting/Fighting003_x264.mp4",
+      "Shooting/Shooting015_x264.mp4"
+    ]
+  },
+  "feature_decision": "dense_existing_candidate_grid",
+  "candidate_clips": 69090,
+  "feature_extraction": {
+    "batch_size": 4,
+    "shard_size": 512,
+    "fp16_autocast": true,
+    "dtype_disk": "float16",
+    "device": "local_cuda",
+    "cpu_threads": 4,
+    "seed": 1337,
+    "cache_revision": "dc740ceda42fce44faed2ea03c6d447db72f6af9",
+    "loader": "existing LoRAVideoMAE.load_from_checkpoint; retain zero new biases; no q_bias/v_bias restoration",
+    "validation_replay_max_absolute_error": 0.005,
+    "validation_replay_min_cosine": 0.99999,
+    "teacher_replay_max_absolute_error": 0.001
+  },
+  "geometry": {
+    "clip_len": 16,
+    "stride": 8,
+    "source_conversion": "integer_keep_every_n",
+    "interval_convention": "zero_based_half_open",
+    "annotation_convention": "one_based_inclusive_to_half_open; declared convention",
+    "out_of_bounds_annotation": "exclude_temporal_only_no_clipping",
+    "uncovered_frames": "retain; AP min_score-1; no interval gap filling"
+  },
+  "metrics": {
+    "ap": "macro per-video source-frame noninterpolated AP from raw attention max-overlap projection",
+    "top_hit": "raw attention max; earliest start/key ties; any positive GT overlap",
+    "interval_sigma": 2,
+    "smoothing_mode": "reflect within stride-contiguous runs",
+    "interval_threshold": 0.5,
+    "display_interval_threshold": 0.65,
+    "iou_success_thresholds": [
+      0.1,
+      0.3,
+      0.5,
+      0.7
+    ],
+    "zero_iou": "exact equality zero",
+    "constant_attention_intervals": "empty",
+    "aggregation": "per-video then three-seed mean and sample SD ddof=1",
+    "temporal_baselines": [
+      "whole_video",
+      "uniform_clips",
+      "random_clips",
+      "teacher_distance"
+    ],
+    "random_baseline": {
+      "rng": "numpy.random.Generator",
+      "bit_generator": "PCG64",
+      "seed_derivation": {
+        "hash": "sha256",
+        "input": "temporal_system_v1:{video_id}",
+        "encoding": "utf-8",
+        "digest_byte_slice": [
+          0,
+          8
+        ],
+        "byte_order": "big",
+        "signed": false
+      },
+      "replicates_per_video": 1,
+      "draw": "rng.random(M, dtype=numpy.float64), Uniform[0,1)",
+      "clip_order": [
+        "clip_start",
+        "clip_key"
+      ],
+      "normalization": "divide the M draws by their sum",
+      "reuse_across_checkpoints": true,
+      "checkpoint_independent": true,
+      "aggregation": "one seed-independent baseline value per video; do not count checkpoint reuse as independent replicates or report a three-seed baseline SD",
+      "selection": "no best-of-seeds, favorable-draw selection, or additional random replicates"
+    }
+  },
+  "routing": {
+    "feature_scope": "all dense candidate clips in temporal order, variable bag size; fixed bags remain separate",
+    "primary_thresholds": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "demo_thresholds": [
+      0.65,
+      0.6,
+      0.65
+    ],
+    "binary_gate": "argmax logits; tie Normal",
+    "top_k_ratio": 0.25,
+    "baselines": [
+      "all_services",
+      "same_checkpoint_binary_gated_all_services"
+    ],
+    "alert_priority_order": [
+      "fire",
+      "medical",
+      "police",
+      "review"
+    ],
+    "send_external_alerts": false
+  },
+  "outputs": {
+    "feature_store": "data/ucf_crime/artifacts/dman_v21/features_lora_temporal_system_v1",
+    "teacher_root": "artifacts/stage2/teacher_temporal_system_v1",
+    "run_root": "artifacts/stage2/temporal_system_v1",
+    "evidence_root": "artifacts/stage2/evidence/temporal_system_v1",
+    "summary": "artifacts/stage2/evidence/temporal_system_v1/summary.json"
+  },
+  "attempt_id": "attempt_001",
+  "output_policy": "exclusive creation; fail on collision; retain failed attempts; no overwrite",
+  "official_evaluation_has_run": false,
+  "source_hashes": {
+    "stage2_class/src/eval/temporal_geometry.py": "0dcfef91191f5f4e27913a6121fbc77d1aa53e7ec0a84254b5850be7bbac882c",
+    "inference/inference_any_video.py": "09c902ae8e4c00a41bddd293c5b0eceb7f7d07f95a1ab989272cb76a6cbc402e",
+    "stage3_dispatch/src/alert_router.py": "e48bf8dce64818972c56dadf2ed525adc7d91f5a82faf27be56355664b708523",
+    "stage2_class/src/models/mil_hierarchical.py": "f1e864aab745f20d1bd5096991802e529535f1744e02fef4443619cb001064d8",
+    "stage2_class/src/utils/dispatch_label_map.py": "ffc549e3212c16df4761e608289a4eaee1408058f55863c2ceacdcdf73873bb5",
+    "stage1b_finetune/src/lora_backbone.py": "58fbc9e29ff3b056b530728060f9ddc7286bb162ebc787308d164dd9d534c9c7",
+    "stage1b_finetune/src/clip_dataset.py": "547c6e34355c44b9cf8350949d9de8713413bf2b0477eb91ae5b91d29f653129"
+  },
+  "evidence_hashes": {
+    "final_thesis_execution/phase_04_temporal_design_compute_preflight/TEMPORAL_SYSTEM_PROTOCOL.md": "80ef67cef03399d823e0bb2bb86191a188568564be0a9aa406602de7cb6b49a2",
+    "final_thesis_execution/phase_04_temporal_design_compute_preflight/PER_VIDEO_SCHEMA.json": "cad337b7f10d41753a9394a7e034e7d6bfb2c3720a2123cb2f1b6f7e5f83d6b4",
+    "final_thesis_execution/phase_04_temporal_design_compute_preflight/coverage_audit.json": "b7b4b87f499e94b6e926fb50c46b1f07f5e984384ea4b0c2871cc42ea5763b75",
+    "final_thesis_execution/phase_04_temporal_design_compute_preflight/benchmark_sample.json": "4fe7042a5e936e614d9fd7c1014825b49699e4c616ac9b06df84cdeedcf27119",
+    "final_thesis_execution/phase_04_temporal_design_compute_preflight/benchmark_results.json": "ff7dc87ec17084bb73cdfe0828afcfcd8d91a970a8200b90d176360771f4e0a1",
+    "final_thesis_execution/phase_04_temporal_design_compute_preflight/backbone_replay.json": "163e82bedf2dcd2f5937335bcfa64da363ce00ef36517835e450a2e2c1009ea7",
+    "final_thesis_execution/phase_04_temporal_design_compute_preflight/annotation_environment_audit.json": "6b7370335e13356865475e5956db6dbfa9ed6438a4bc6f4bf5f58acc9929f2aa",
+    "final_thesis_execution/phase_04_temporal_design_compute_preflight/loader_teacher_audit.json": "4934e70f5a17f76d6ebccbae3d6c6674742ef04cf6ae1c22bcbc06c2866bb363"
+  }
+}

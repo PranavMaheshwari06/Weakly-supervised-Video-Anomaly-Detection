@@ -1,0 +1,52 @@
+{
+  "matlab_text_rows_compared": 290,
+  "matlab_text_raw_conflicts": [],
+  "fully_decoded_boundary_conflicts": [
+    {
+      "video_id": "Arson/Arson011_x264.mp4",
+      "metadata_frame_count": 1266,
+      "decoded_frame_count": 1266,
+      "annotation_issue": "Invalid annotation bounds: (680, 1267) / 1266"
+    },
+    {
+      "video_id": "Arson/Arson016_x264.mp4",
+      "metadata_frame_count": 1795,
+      "decoded_frame_count": 1795,
+      "annotation_issue": "Invalid annotation bounds: (1000, 1796) / 1795"
+    },
+    {
+      "video_id": "Explosion/Explosion033_x264.mp4",
+      "metadata_frame_count": 3154,
+      "decoded_frame_count": 3154,
+      "annotation_issue": "Invalid annotation bounds: (1550, 3156) / 3154"
+    },
+    {
+      "video_id": "Fighting/Fighting003_x264.mp4",
+      "metadata_frame_count": 3102,
+      "decoded_frame_count": 3102,
+      "annotation_issue": "Invalid annotation bounds: (1820, 3103) / 3102"
+    },
+    {
+      "video_id": "Shooting/Shooting015_x264.mp4",
+      "metadata_frame_count": 1713,
+      "decoded_frame_count": 1713,
+      "annotation_issue": "Invalid annotation bounds: (855, 1715) / 1713"
+    }
+  ],
+  "annotation_origin_note": "README says start/end frame numbers but does not explicitly state indexing origin. Freeze 1-based inclusive as a declared convention (positive bounds, MATLAB companion); do not claim README proves origin.",
+  "environment": {
+    "python": "3.12.3",
+    "platform": "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "packages": {
+      "torch": "2.5.1+cu121",
+      "torchvision": "0.20.1+cu121",
+      "transformers": "5.12.0",
+      "peft": "0.19.1",
+      "numpy": "1.26.4",
+      "scipy": "1.17.0",
+      "scikit-learn": "1.8.0",
+      "opencv-python": "4.10.0.84",
+      "safetensors": "0.7.0"
+    }
+  }
+}

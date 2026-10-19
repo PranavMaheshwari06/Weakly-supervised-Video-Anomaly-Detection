@@ -1,0 +1,478 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Phase 5 temporal_system_v1 per-video record",
+  "type": "object",
+  "required": [
+    "protocol_id",
+    "video_id",
+    "checkpoint",
+    "status",
+    "annotation_status",
+    "metadata",
+    "clip_keys",
+    "clip_starts",
+    "attention",
+    "teacher_scores",
+    "intervals",
+    "temporal_metrics",
+    "baseline_metrics",
+    "coverage",
+    "routing",
+    "failures",
+    "provenance"
+  ],
+  "properties": {
+    "protocol_id": {
+      "const": "temporal_system_v1"
+    },
+    "video_id": {
+      "type": "string"
+    },
+    "checkpoint": {
+      "enum": [
+        "dispatch_repro_s1337",
+        "dispatch_repro_s2027",
+        "dispatch_repro_s3407"
+      ]
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "temporal_excluded",
+        "technical_failure"
+      ]
+    },
+    "annotation_status": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "src_fps",
+        "keep_every_n",
+        "src_frame_count",
+        "clip_len",
+        "stride"
+      ]
+    },
+    "clip_keys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "clip_starts": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "uniqueItems": true
+    },
+    "attention": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "teacher_scores": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "intervals": {
+      "type": "object",
+      "required": [
+        "ground_truth",
+        "primary_ungated",
+        "display_ungated",
+        "display_gated"
+      ],
+      "properties": {
+        "ground_truth": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                ],
+                "minItems": 2,
+                "maxItems": 2
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "primary_ungated": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "integer",
+                "minimum": 1
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "display_ungated": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "integer",
+                "minimum": 1
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "display_gated": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "integer",
+                "minimum": 1
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        }
+      }
+    },
+    "temporal_metrics": {
+      "type": "object",
+      "required": [
+        "primary",
+        "display_gated_iou",
+        "display_gated_zero_iou"
+      ],
+      "properties": {
+        "primary": {
+          "type": "object",
+          "required": [
+            "ap",
+            "top_hit",
+            "iou",
+            "zero_iou",
+            "null_reason"
+          ],
+          "properties": {
+            "ap": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "top_hit": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "iou": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "zero_iou": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "null_reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "display_gated_iou": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "display_gated_zero_iou": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "baseline_metrics": {
+      "type": "object",
+      "required": [
+        "whole_video",
+        "uniform_clips",
+        "random_clips",
+        "teacher_distance"
+      ],
+      "properties": {
+        "whole_video": {
+          "type": "object",
+          "required": [
+            "ap",
+            "top_hit",
+            "iou",
+            "zero_iou",
+            "null_reason"
+          ],
+          "properties": {
+            "ap": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "top_hit": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "iou": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "zero_iou": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "null_reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "uniform_clips": {
+          "type": "object",
+          "required": [
+            "ap",
+            "top_hit",
+            "iou",
+            "zero_iou",
+            "null_reason"
+          ],
+          "properties": {
+            "ap": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "top_hit": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "iou": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "zero_iou": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "null_reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "random_clips": {
+          "type": "object",
+          "required": [
+            "ap",
+            "top_hit",
+            "iou",
+            "zero_iou",
+            "null_reason"
+          ],
+          "properties": {
+            "ap": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "top_hit": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "iou": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "zero_iou": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "null_reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "teacher_distance": {
+          "type": "object",
+          "required": [
+            "ap",
+            "top_hit",
+            "iou",
+            "zero_iou",
+            "null_reason"
+          ],
+          "properties": {
+            "ap": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "top_hit": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "iou": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "zero_iou": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "null_reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "required": [
+        "expected_clips",
+        "realized_clips",
+        "covered_source_frames",
+        "fraction",
+        "max_uncovered_gap_frames",
+        "annotation_coverage"
+      ]
+    },
+    "routing": {
+      "type": "object",
+      "required": [
+        "binary_true",
+        "dispatch_target",
+        "binary_logits",
+        "binary_score",
+        "binary_pred",
+        "dispatch_logits",
+        "dispatch_scores",
+        "raw_primary",
+        "gated_primary",
+        "raw_demo",
+        "gated_demo",
+        "cad_priority",
+        "alert_triggered",
+        "trigger_frame",
+        "trigger_seconds"
+      ]
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "video_id",
+          "checkpoint",
+          "stage",
+          "code",
+          "message",
+          "affected_keys",
+          "expected_count",
+          "observed_count",
+          "retry_identity"
+        ]
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "checkpoint_sha256",
+        "feature_store_identity",
+        "teacher_sha256",
+        "protocol_sha256",
+        "attempt_id"
+      ]
+    }
+  },
+  "description": "All unavailable metrics/logits are null with failure reason; technical failure records preserve expected keys. Full precision arrays must have matching lengths; require explicit independent semantic validation in Phase 5. Model artifact references may supplement, never replace the required arrays in final per-video records."
+}

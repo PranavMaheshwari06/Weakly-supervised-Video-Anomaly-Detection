@@ -1,0 +1,45 @@
+# env / venv
+venv/
+.venv/
+env/
+.conda/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# OS/editor
+.DS_Store
+.vscode/
+
+# logs
+*.log
+logs/
+tb_logs/
+wandb/
+
+# dataset, features and run outputs are distributed separately (see README.md);
+# only the fixed split files are tracked
+/data/*
+!/data/ucf_crime/
+/data/ucf_crime/*
+!/data/ucf_crime/splits/
+# historical evidence restored from the evidence bundle
+/legacy/
+
+# artifacts / outputs
+artifacts/
+outputs/
+runs/
+results/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.pkl
+*.npz
+
+# temp
+tmp/
+cache/
+*.tmp

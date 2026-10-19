@@ -1,0 +1,454 @@
+{
+  "aggregate": {
+    "metrics": {
+      "binary_accuracy": {
+        "mean": 0.8816091954022989,
+        "sample_std": 0.008677970615253753
+      },
+      "binary_auroc": {
+        "mean": 0.9402857142857143,
+        "sample_std": 0.0016274292848223952
+      },
+      "binary_f1": {
+        "mean": 0.8752633161654824,
+        "sample_std": 0.012110104765204903
+      },
+      "binary_precision": {
+        "mean": 0.8897374595651122,
+        "sample_std": 0.009471597508476818
+      },
+      "binary_recall": {
+        "mean": 0.861904761904762,
+        "sample_std": 0.032208926805877815
+      },
+      "exact_match_ratio": {
+        "mean": 0.09885057471264368,
+        "sample_std": 0.01960772656233561
+      },
+      "hamming_loss": {
+        "mean": 0.5919540229885057,
+        "sample_std": 0.032773741216973004
+      },
+      "macro_f1": {
+        "mean": 0.4776275701806547,
+        "sample_std": 0.009306495645831124
+      },
+      "macro_recall": {
+        "mean": 0.9809959432600942,
+        "sample_std": 0.012764033764460031
+      }
+    },
+    "per_channel": {
+      "fire": {
+        "f1": {
+          "mean": 0.3909719909719909,
+          "sample_std": 0.06082360580644943
+        },
+        "fn": {
+          "mean": 2.3333333333333335,
+          "sample_std": 2.0816659994661326
+        },
+        "fp": {
+          "mean": 161.33333333333334,
+          "sample_std": 54.30776494511014
+        },
+        "precision": {
+          "mean": 0.24765094950696515,
+          "sample_std": 0.049035329000207774
+        },
+        "recall": {
+          "mean": 0.9559748427672956,
+          "sample_std": 0.0392767169710591
+        },
+        "support_neg": {
+          "mean": 237,
+          "sample_std": 0.0
+        },
+        "support_pos": {
+          "mean": 53,
+          "sample_std": 0.0
+        },
+        "tn": {
+          "mean": 75.66666666666667,
+          "sample_std": 54.30776494511014
+        },
+        "tp": {
+          "mean": 50.666666666666664,
+          "sample_std": 2.0816659994661326
+        }
+      },
+      "medical": {
+        "f1": {
+          "mean": 0.4600036291054255,
+          "sample_std": 0.04227973985182361
+        },
+        "fn": {
+          "mean": 1,
+          "sample_std": 1.0
+        },
+        "fp": {
+          "mean": 179.33333333333334,
+          "sample_std": 31.085902485424697
+        },
+        "precision": {
+          "mean": 0.3006222459643269,
+          "sample_std": 0.03658946655475763
+        },
+        "recall": {
+          "mean": 0.987012987012987,
+          "sample_std": 0.012987012987012991
+        },
+        "support_neg": {
+          "mean": 213,
+          "sample_std": 0.0
+        },
+        "support_pos": {
+          "mean": 77,
+          "sample_std": 0.0
+        },
+        "tn": {
+          "mean": 33.666666666666664,
+          "sample_std": 31.085902485424697
+        },
+        "tp": {
+          "mean": 76,
+          "sample_std": 1.0
+        }
+      },
+      "police": {
+        "f1": {
+          "mean": 0.5819070904645477,
+          "sample_std": 0.0
+        },
+        "fn": {
+          "mean": 0,
+          "sample_std": 0.0
+        },
+        "fp": {
+          "mean": 171,
+          "sample_std": 0.0
+        },
+        "precision": {
+          "mean": 0.4103448275862069,
+          "sample_std": 0.0
+        },
+        "recall": {
+          "mean": 1.0,
+          "sample_std": 0.0
+        },
+        "support_neg": {
+          "mean": 171,
+          "sample_std": 0.0
+        },
+        "support_pos": {
+          "mean": 119,
+          "sample_std": 0.0
+        },
+        "tn": {
+          "mean": 0,
+          "sample_std": 0.0
+        },
+        "tp": {
+          "mean": 119,
+          "sample_std": 0.0
+        }
+      }
+    },
+    "prediction_distributions": {
+      "binary_prediction_distribution": {
+        "0": {
+          "combined_count": 463,
+          "mean_count": 154.33333333333334,
+          "sample_std_count": 6.506407098647712
+        },
+        "1": {
+          "combined_count": 407,
+          "mean_count": 135.66666666666666,
+          "sample_std_count": 6.506407098647712
+        }
+      },
+      "dispatch_prediction_distribution": {
+        "1,0,0": {
+          "combined_count": 49,
+          "mean_count": 16.333333333333332,
+          "sample_std_count": 14.977761292440647
+        },
+        "1,0,1": {
+          "combined_count": 55,
+          "mean_count": 18.333333333333332,
+          "sample_std_count": 31.75426480542942
+        },
+        "1,1,0": {
+          "combined_count": 185,
+          "mean_count": 61.666666666666664,
+          "sample_std_count": 54.12331598611945
+        },
+        "1,1,1": {
+          "combined_count": 581,
+          "mean_count": 193.66666666666666,
+          "sample_std_count": 24.583192089989723
+        }
+      }
+    }
+  },
+  "evaluation": {
+    "dispatch_threshold": 0.5,
+    "fixed_bag_manifest": "artifacts/stage2/bag_manifests/dispatch_lora_fixed_test.json",
+    "fixed_bag_manifest_sha256": "9cddad6d40e9efe8f11c51982199ea1a2056a1c5be6131b4d4df083a37fc4041",
+    "num_seeds": 3,
+    "run_tags": [
+      "dispatch_repro_s1337",
+      "dispatch_repro_s2027",
+      "dispatch_repro_s3407"
+    ],
+    "split": "test",
+    "standard_deviation": "sample (N-1)"
+  },
+  "individual_runs": {
+    "dispatch_repro_s1337": {
+      "binary_confusion": {
+        "fn": 19,
+        "fp": 15,
+        "tn": 135,
+        "tp": 121
+      },
+      "binary_prediction_distribution": {
+        "0": 154,
+        "1": 136
+      },
+      "count_videos": 290,
+      "dispatch_prediction_distribution": {
+        "1,0,0": 33,
+        "1,1,0": 79,
+        "1,1,1": 178
+      },
+      "metrics": {
+        "binary_accuracy": 0.8827586206896552,
+        "binary_auroc": 0.9385714285714286,
+        "binary_f1": 0.8768115942028986,
+        "binary_precision": 0.8897058823529411,
+        "binary_recall": 0.8642857142857143,
+        "exact_match_ratio": 0.1206896551724138,
+        "hamming_loss": 0.5586206896551724,
+        "macro_f1": 0.4879697732573887,
+        "macro_recall": 0.9724740668136894
+      },
+      "per_channel": {
+        "fire": {
+          "f1": 0.43290043290043295,
+          "fn": 3,
+          "fp": 128,
+          "precision": 0.2808988764044944,
+          "recall": 0.9433962264150944,
+          "support_neg": 237,
+          "support_pos": 53,
+          "tn": 109,
+          "tp": 50
+        },
+        "medical": {
+          "f1": 0.44910179640718567,
+          "fn": 2,
+          "fp": 182,
+          "precision": 0.2918287937743191,
+          "recall": 0.974025974025974,
+          "support_neg": 213,
+          "support_pos": 77,
+          "tn": 31,
+          "tp": 75
+        },
+        "police": {
+          "f1": 0.5819070904645477,
+          "fn": 0,
+          "fp": 171,
+          "precision": 0.4103448275862069,
+          "recall": 1.0,
+          "support_neg": 171,
+          "support_pos": 119,
+          "tn": 0,
+          "tp": 119
+        }
+      },
+      "provenance": {
+        "bag_manifest": "artifacts/stage2/bag_manifests/dispatch_lora_fixed_test.json",
+        "bag_manifest_sha256": "9cddad6d40e9efe8f11c51982199ea1a2056a1c5be6131b4d4df083a37fc4041",
+        "checkpoint": "artifacts/stage2/runs/dispatch_repro_s1337/checkpoints/mil_best.pt",
+        "checkpoint_sha256": "95e04b0a1ca35ef859b6511c3eb86e706b24fa2e95126e8f528c16a3ef8a69c3",
+        "configuration_identity": "9ffd0272e7535e1626474be998b97d3147423c173b18a4ecad7e8b66cd653b56",
+        "evaluation_json": "artifacts/stage2/eval/dispatch_repro_s1337/dispatch_eval_test.json",
+        "evaluation_json_sha256": "ccc2c8a01049171c5abb55074ef31591bdbc2cbe7e045c99e14f5f1ea16e4e6d",
+        "evaluation_seed": 1337,
+        "run_tag": "dispatch_repro_s1337",
+        "threshold_policy": {
+          "dispatch_primary": 0.5,
+          "mode": "fixed",
+          "selection_procedure": null
+        }
+      },
+      "training_seed": 1337
+    },
+    "dispatch_repro_s2027": {
+      "binary_confusion": {
+        "fn": 24,
+        "fp": 13,
+        "tn": 137,
+        "tp": 116
+      },
+      "binary_prediction_distribution": {
+        "0": 161,
+        "1": 129
+      },
+      "count_videos": 290,
+      "dispatch_prediction_distribution": {
+        "1,0,0": 12,
+        "1,0,1": 55,
+        "1,1,0": 1,
+        "1,1,1": 222
+      },
+      "metrics": {
+        "binary_accuracy": 0.8724137931034482,
+        "binary_auroc": 0.9404761904761905,
+        "binary_f1": 0.8624535315985131,
+        "binary_precision": 0.8992248062015504,
+        "binary_recall": 0.8285714285714286,
+        "exact_match_ratio": 0.08275862068965517,
+        "hamming_loss": 0.6241379310344828,
+        "macro_f1": 0.46992862611444525,
+        "macro_recall": 0.9956709956709956
+      },
+      "per_channel": {
+        "fire": {
+          "f1": 0.32121212121212117,
+          "fn": 0,
+          "fp": 224,
+          "precision": 0.19133574007220217,
+          "recall": 1.0,
+          "support_neg": 237,
+          "support_pos": 53,
+          "tn": 13,
+          "tp": 53
+        },
+        "medical": {
+          "f1": 0.5066666666666667,
+          "fn": 1,
+          "fp": 147,
+          "precision": 0.34080717488789236,
+          "recall": 0.987012987012987,
+          "support_neg": 213,
+          "support_pos": 77,
+          "tn": 66,
+          "tp": 76
+        },
+        "police": {
+          "f1": 0.5819070904645477,
+          "fn": 0,
+          "fp": 171,
+          "precision": 0.4103448275862069,
+          "recall": 1.0,
+          "support_neg": 171,
+          "support_pos": 119,
+          "tn": 0,
+          "tp": 119
+        }
+      },
+      "provenance": {
+        "bag_manifest": "artifacts/stage2/bag_manifests/dispatch_lora_fixed_test.json",
+        "bag_manifest_sha256": "9cddad6d40e9efe8f11c51982199ea1a2056a1c5be6131b4d4df083a37fc4041",
+        "checkpoint": "artifacts/stage2/runs/dispatch_repro_s2027/checkpoints/mil_best.pt",
+        "checkpoint_sha256": "7473fef046ac8cc8bfd9e4b5693844b8ecf113b7496a714303d4190f9d960bcb",
+        "configuration_identity": "ecbcab202b0b091ff9cc70b6d7deb42fa41a2f3d84511ad7ebf71dcb19b483c3",
+        "evaluation_json": "artifacts/stage2/eval/dispatch_repro_s2027/dispatch_eval_test.json",
+        "evaluation_json_sha256": "114b0b38f5dc0e076f98a1a7f392198966db41a8d053644a245709d38e366db7",
+        "evaluation_seed": 1337,
+        "run_tag": "dispatch_repro_s2027",
+        "threshold_policy": {
+          "dispatch_primary": 0.5,
+          "mode": "fixed",
+          "selection_procedure": null
+        }
+      },
+      "training_seed": 2027
+    },
+    "dispatch_repro_s3407": {
+      "binary_confusion": {
+        "fn": 15,
+        "fp": 17,
+        "tn": 133,
+        "tp": 125
+      },
+      "binary_prediction_distribution": {
+        "0": 148,
+        "1": 142
+      },
+      "count_videos": 290,
+      "dispatch_prediction_distribution": {
+        "1,0,0": 4,
+        "1,1,0": 105,
+        "1,1,1": 181
+      },
+      "metrics": {
+        "binary_accuracy": 0.8896551724137931,
+        "binary_auroc": 0.9418095238095239,
+        "binary_f1": 0.8865248226950355,
+        "binary_precision": 0.8802816901408451,
+        "binary_recall": 0.8928571428571429,
+        "exact_match_ratio": 0.09310344827586207,
+        "hamming_loss": 0.593103448275862,
+        "macro_f1": 0.4749843111701302,
+        "macro_recall": 0.9748427672955975
+      },
+      "per_channel": {
+        "fire": {
+          "f1": 0.4188034188034187,
+          "fn": 4,
+          "fp": 132,
+          "precision": 0.27071823204419887,
+          "recall": 0.9245283018867925,
+          "support_neg": 237,
+          "support_pos": 53,
+          "tn": 105,
+          "tp": 49
+        },
+        "medical": {
+          "f1": 0.42424242424242425,
+          "fn": 0,
+          "fp": 209,
+          "precision": 0.2692307692307692,
+          "recall": 1.0,
+          "support_neg": 213,
+          "support_pos": 77,
+          "tn": 4,
+          "tp": 77
+        },
+        "police": {
+          "f1": 0.5819070904645477,
+          "fn": 0,
+          "fp": 171,
+          "precision": 0.4103448275862069,
+          "recall": 1.0,
+          "support_neg": 171,
+          "support_pos": 119,
+          "tn": 0,
+          "tp": 119
+        }
+      },
+      "provenance": {
+        "bag_manifest": "artifacts/stage2/bag_manifests/dispatch_lora_fixed_test.json",
+        "bag_manifest_sha256": "9cddad6d40e9efe8f11c51982199ea1a2056a1c5be6131b4d4df083a37fc4041",
+        "checkpoint": "artifacts/stage2/runs/dispatch_repro_s3407/checkpoints/mil_best.pt",
+        "checkpoint_sha256": "6de4b613a013ae5c4f5e39845298c0b1801db9240d8685913a2ab9d5eba3fe16",
+        "configuration_identity": "48fc20d2a00d300c6c03dbf45de7cb63c542c83b8227af032d72338c7eaed0a9",
+        "evaluation_json": "artifacts/stage2/eval/dispatch_repro_s3407/dispatch_eval_test.json",
+        "evaluation_json_sha256": "8402f7cc3c2ad5e69ffa46f90751d55fffc28015ab719e7a774c0296460fa2e8",
+        "evaluation_seed": 1337,
+        "run_tag": "dispatch_repro_s3407",
+        "threshold_policy": {
+          "dispatch_primary": 0.5,
+          "mode": "fixed",
+          "selection_procedure": null
+        }
+      },
+      "training_seed": 3407
+    }
+  },
+  "schema_version": 1
+}

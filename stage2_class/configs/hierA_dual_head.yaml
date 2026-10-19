@@ -1,0 +1,38 @@
+seed: 1337
+device: cuda
+
+paths:
+  feature_store_root: data/ucf_crime/artifacts/dman_v21/features
+  splits_root: data/ucf_crime/splits/dman_v21
+  videos_index_jsonl: data/ucf_crime/artifacts/dman_v21/clip_index/videos.jsonl
+
+stage1:
+  global_dim: 768
+
+stage2:
+  num_classes: 14
+  bag_size: 16
+  warmup_epochs: 2
+  mixture_uniform_ratio: 0.5
+  top_fraction: 0.25
+  inject_teacher_score: true
+  attention_hidden_dim: 256
+  dropout: 0.1
+
+train:
+  batch_size_videos: 16
+  num_workers: 4
+  pin_memory: true
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  epochs: 40
+  grad_clip_norm: 5.0
+  early_stop_patience: 8
+  early_stop_min_delta: 0.0001
+  anomaly_loss_weight: 0.5
+  save_dir_checkpoints: artifacts/stage2/runs/hierA_dual_head/checkpoints
+
+io:
+  max_shards_to_scan: -1
+  write_dir_results: artifacts/stage2/runs/hierA_dual_head/train
+  write_dir_logs: artifacts/stage2/runs/hierA_dual_head/train

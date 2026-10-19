@@ -1,0 +1,13 @@
+{
+  "adapter_keys_checked": 48,
+  "new_attention_bias_count": 36,
+  "new_attention_bias_max_abs": 0.0,
+  "loaded_backbone_state_sha256": "cda5482ac14aa710a7a63f82344b5a409d12fb56e0583142186d123d246bb9a0",
+  "state_hash_encoding": "sorted key UTF8 + dtype string UTF8 + shape tuple string UTF8 + contiguous CPU tensor numpy bytes, no separators; backbone including adapters only",
+  "teacher_validation_clips": 17117,
+  "saved_prototype_dtype": "float16",
+  "teacher_max_abs_difference": 6.914138793945312e-05,
+  "teacher_mean_abs_difference": 5.691395662805498e-06,
+  "teacher_tolerance": 0.001,
+  "teacher_check_passed": true
+}

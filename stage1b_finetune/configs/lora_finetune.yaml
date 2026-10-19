@@ -1,0 +1,60 @@
+# stage1b_finetune/configs/lora_finetune.yaml
+# LoRA End-to-End Fine-tuning Configuration for UCF-Crime
+
+seed: 1337
+
+# Paths (adjust to your machine)
+paths:
+  repo_root: "."
+  raw_video_root: "data/ucf_crime/raw"
+  videos_jsonl: "data/ucf_crime/artifacts/dman_v21/clip_index/videos.jsonl"
+  splits_root: "data/ucf_crime/splits/dman_v21"
+  teacher_scores_dir: "artifacts/stage2/teacher"
+  # Output directory for LoRA-adapted features
+  lora_feature_store: "data/ucf_crime/artifacts/dman_v21/features_lora"
+  # Checkpoint output
+  lora_checkpoint_dir: "artifacts/stage1b/checkpoints"
+
+# VideoMAE backbone specification
+backbone:
+  model_name: "MCG-NJU/videomae-base"
+  clip_len: 16
+  img_size: 224
+  hidden_dim: 768
+  fps_target: 15.0
+  stride: 8
+
+# LoRA configuration
+lora:
+  rank: 8
+  alpha: 16  # scaling factor = alpha/rank = 2.0
+  dropout: 0.05
+  target_modules: ["query", "value"]  # Q and V projections in attention
+  bias: "none"
+
+# Training configuration
+train:
+  epochs: 8
+  clips_per_video: 8          # sample this many clips per video per epoch
+  batch_size_clips: 2         # clips forwarded simultaneously through backbone
+  gradient_accumulation_videos: 4  # accumulate gradients over this many videos
+  learning_rate: 1.0e-4
+  weight_decay: 0.01
+  warmup_ratio: 0.1           # fraction of total steps for LR warmup
+  grad_clip_norm: 1.0
+  fp16: true
+  gradient_checkpointing: true
+  # Teacher score weighting
+  teacher_weight_temperature: 2.0  # sharpening factor for teacher weights
+  normal_clip_weight: 1.0
+  min_anomaly_clip_weight: 0.1     # floor for anomaly clip weights
+
+# Feature extraction (after LoRA training)
+extract:
+  max_clips_per_video: 64     # train: cap clips per video
+  max_clips_per_video_eval: 128  # val/test: more clips
+  batch_size_clips: 4         # inference is cheaper, can batch more
+  shard_size: 512             # clips per output shard file
+
+# Label configuration (must match Stage-2)
+num_classes: 14

@@ -1,0 +1,49 @@
+# Phase 3 controlled teacher ablation. Normalized configs differ only in the declared factors.
+seed: 1337
+device: "cuda"
+
+paths:
+  feature_store_root: "data/ucf_crime/artifacts/dman_v21/features_lora"
+  splits_root: "data/ucf_crime/splits/dman_v21"
+  videos_index_jsonl: "data/ucf_crime/artifacts/dman_v21/clip_index/videos.jsonl"
+  teacher_scores_root: "artifacts/stage2/teacher"
+
+reproducibility:
+  evaluation_seed: 1337
+  evaluation_bag_manifest_pattern: "artifacts/stage2/bag_manifests/dispatch_lora_fixed_{split}.json"
+  primary_dispatch_threshold: 0.5
+  feature_store_scope: "Validation-only teacher ablation conditional on the frozen LoRA feature store."
+  validation_only: true
+
+stage1:
+  global_dim: 768
+
+stage2:
+  num_dispatch_channels: 3
+  bag_size: 16
+  warmup_epochs: 2
+  mixture_uniform_ratio: 0.5
+  top_fraction: 0.25
+  inject_teacher_score: false
+  attention_hidden_dim: 256
+  dropout: 0.1
+
+train:
+  epochs: 100
+  batch_size_videos: 8
+  num_workers: 2
+  pin_memory: true
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-4
+  grad_clip_norm: 1.0
+  early_stop_patience: 15
+  early_stop_min_delta: 1.0e-4
+  dispatch_loss_weight: 1.0
+  asl_gamma_pos: 0.0
+  asl_gamma_neg: 6.0
+  asl_clip: 0.05
+
+io:
+  max_shards_to_scan: -1
+  write_dir_results: "artifacts/stage2/results"
+  write_dir_logs: "artifacts/stage2/logs"

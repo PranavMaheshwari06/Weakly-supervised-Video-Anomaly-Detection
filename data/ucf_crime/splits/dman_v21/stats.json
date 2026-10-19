@@ -1,0 +1,70 @@
+{
+  "totals": {
+    "train": 1449,
+    "val": 161,
+    "test": 290,
+    "train_plus_val": 1610,
+    "all": 1900
+  },
+  "by_group": {
+    "train": {
+      "Abuse": 43,
+      "Arrest": 41,
+      "Arson": 37,
+      "Assault": 42,
+      "Burglary": 78,
+      "Explosion": 26,
+      "Fighting": 41,
+      "RoadAccidents": 114,
+      "Robbery": 131,
+      "Shooting": 24,
+      "Shoplifting": 26,
+      "Stealing": 85,
+      "Training_Normal_Videos_Anomaly": 720,
+      "Vandalism": 41
+    },
+    "val": {
+      "Abuse": 5,
+      "Arrest": 4,
+      "Arson": 4,
+      "Assault": 5,
+      "Burglary": 9,
+      "Explosion": 3,
+      "Fighting": 4,
+      "RoadAccidents": 13,
+      "Robbery": 14,
+      "Shooting": 3,
+      "Shoplifting": 3,
+      "Stealing": 10,
+      "Training_Normal_Videos_Anomaly": 80,
+      "Vandalism": 4
+    },
+    "test": {
+      "Abuse": 2,
+      "Arrest": 5,
+      "Arson": 9,
+      "Assault": 3,
+      "Burglary": 13,
+      "Explosion": 21,
+      "Fighting": 5,
+      "RoadAccidents": 23,
+      "Robbery": 5,
+      "Shooting": 23,
+      "Shoplifting": 21,
+      "Stealing": 5,
+      "Testing_Normal_Videos_Anomaly": 150,
+      "Vandalism": 5
+    }
+  },
+  "config": {
+    "val_ratio": 0.1,
+    "seed": 42,
+    "min_val_per_group": 1
+  },
+  "paths": {
+    "raw_root": "/home/pranavmaheshwari/Pranav_master_thesis/master_thesis_crowd_anomaly/data/ucf_crime/raw",
+    "official_train": "/home/pranavmaheshwari/Pranav_master_thesis/master_thesis_crowd_anomaly/data/ucf_crime/splits/Anomaly_Detection_splits/Anomaly_Train.txt",
+    "official_test": "/home/pranavmaheshwari/Pranav_master_thesis/master_thesis_crowd_anomaly/data/ucf_crime/splits/Anomaly_Detection_splits/Anomaly_Test.txt",
+    "out_dir": "/home/pranavmaheshwari/Pranav_master_thesis/master_thesis_crowd_anomaly/data/ucf_crime/splits/dman_v21"
+  }
+}

@@ -1,0 +1,44 @@
+# stage2_class/configs/hierA_lora_features.yaml
+# Stage-2 Hierarchical MIL config using LoRA-adapted features.
+#
+# This is a COPY of hierA_dual_head.yaml with ONLY the feature_store_root
+# path changed to point to LoRA-extracted features. Everything else is identical.
+
+seed: 1337
+device: "cuda"
+
+paths:
+  # CHANGED: point to LoRA features instead of frozen features
+  feature_store_root: "data/ucf_crime/artifacts/dman_v21/features_lora"
+  splits_root: "data/ucf_crime/splits/dman_v21"
+  videos_index_jsonl: "data/ucf_crime/artifacts/dman_v21/clip_index/videos.jsonl"
+
+stage1:
+  global_dim: 768
+
+stage2:
+  num_classes: 14
+  bag_size: 16
+  warmup_epochs: 2
+  mixture_uniform_ratio: 0.5
+  top_fraction: 0.25
+  inject_teacher_score: true
+  attention_hidden_dim: 256
+  dropout: 0.1
+
+train:
+  epochs: 60
+  batch_size_videos: 8
+  num_workers: 2
+  pin_memory: true
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-4
+  grad_clip_norm: 1.0
+  early_stop_patience: 10
+  early_stop_min_delta: 1.0e-4
+  anomaly_loss_weight: 0.5
+
+io:
+  max_shards_to_scan: -1
+  write_dir_results: "artifacts/stage2/run/hierA_lora_features/train"
+  write_dir_logs: "artifacts/stage2/runs/hierA_lora_features/train"

@@ -1,0 +1,267 @@
+{
+  "kind": "validation_feature_replay_no_MIL_or_temporal_results",
+  "backbone_cache_revision": "dc740ceda42fce44faed2ea03c6d447db72f6af9",
+  "backbone_hashes": {
+    "config.json": "5fbedfea3706bd9fe6c0dc706beeb501ae72e4954703e03bebe3406f046f8212",
+    "model.safetensors": "bc053ca2840a038b1068269a4eec06ca569689e9a1ed9376a5b2b8a111be5290",
+    "preprocessor_config.json": "c3aa722f22a7ff0d234d407862025fe47672f74f46f92c91f757f7a7354107c2"
+  },
+  "results": {
+    "current_loader": [
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos433_x264.mp4",
+        "start": 0,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "cosine_similarity": 1.0
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos433_x264.mp4",
+        "start": 104,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "cosine_similarity": 1.0000001192092896
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos433_x264.mp4",
+        "start": 208,
+        "max_abs_error": 0.00048828125,
+        "mean_abs_error": 3.120427209069021e-05,
+        "cosine_similarity": 0.9999998211860657
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos771_x264.mp4",
+        "start": 0,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "cosine_similarity": 0.9999998807907104
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos771_x264.mp4",
+        "start": 616,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "cosine_similarity": 1.0000001192092896
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos771_x264.mp4",
+        "start": 1208,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "cosine_similarity": 1.0
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos307_x264.mp4",
+        "start": 464,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "cosine_similarity": 1.0
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos307_x264.mp4",
+        "start": 161448,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "cosine_similarity": 1.0
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos307_x264.mp4",
+        "start": 311096,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "cosine_similarity": 1.000000238418579
+      },
+      {
+        "video_id": "Shooting/Shooting001_x264.mp4",
+        "start": 0,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "cosine_similarity": 0.9999999403953552
+      },
+      {
+        "video_id": "Shooting/Shooting001_x264.mp4",
+        "start": 56,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "cosine_similarity": 0.9999999403953552
+      },
+      {
+        "video_id": "Shooting/Shooting001_x264.mp4",
+        "start": 104,
+        "max_abs_error": 0.000244140625,
+        "mean_abs_error": 2.6794537916430272e-05,
+        "cosine_similarity": 1.000000238418579
+      },
+      {
+        "video_id": "Fighting/Fighting002_x264.mp4",
+        "start": 0,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "cosine_similarity": 1.000000238418579
+      },
+      {
+        "video_id": "Fighting/Fighting002_x264.mp4",
+        "start": 688,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "cosine_similarity": 0.9999997615814209
+      },
+      {
+        "video_id": "Fighting/Fighting002_x264.mp4",
+        "start": 1328,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "cosine_similarity": 0.9999999403953552
+      },
+      {
+        "video_id": "Shoplifting/Shoplifting040_x264.mp4",
+        "start": 16,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "cosine_similarity": 1.0000001192092896
+      },
+      {
+        "video_id": "Shoplifting/Shoplifting040_x264.mp4",
+        "start": 6424,
+        "max_abs_error": 0.0009765625,
+        "mean_abs_error": 4.0624912799103186e-05,
+        "cosine_similarity": 1.0
+      },
+      {
+        "video_id": "Shoplifting/Shoplifting040_x264.mp4",
+        "start": 13576,
+        "max_abs_error": 0.00048828125,
+        "mean_abs_error": 2.6714677005656995e-05,
+        "cosine_similarity": 0.9999998807907104
+      }
+    ],
+    "restored_pretrained_biases": [
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos433_x264.mp4",
+        "start": 0,
+        "max_abs_error": 1.984375,
+        "mean_abs_error": 0.17787134647369385,
+        "cosine_similarity": 0.8741406202316284
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos433_x264.mp4",
+        "start": 104,
+        "max_abs_error": 1.9609375,
+        "mean_abs_error": 0.15905533730983734,
+        "cosine_similarity": 0.8961577415466309
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos433_x264.mp4",
+        "start": 208,
+        "max_abs_error": 1.5703125,
+        "mean_abs_error": 0.1305055171251297,
+        "cosine_similarity": 0.9283214807510376
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos771_x264.mp4",
+        "start": 0,
+        "max_abs_error": 1.20751953125,
+        "mean_abs_error": 0.1126805767416954,
+        "cosine_similarity": 0.9427570700645447
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos771_x264.mp4",
+        "start": 616,
+        "max_abs_error": 0.8701171875,
+        "mean_abs_error": 0.07846816629171371,
+        "cosine_similarity": 0.9750529527664185
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos771_x264.mp4",
+        "start": 1208,
+        "max_abs_error": 3.1484375,
+        "mean_abs_error": 0.16183297336101532,
+        "cosine_similarity": 0.8732984066009521
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos307_x264.mp4",
+        "start": 464,
+        "max_abs_error": 0.740234375,
+        "mean_abs_error": 0.06890027970075607,
+        "cosine_similarity": 0.9785037636756897
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos307_x264.mp4",
+        "start": 161448,
+        "max_abs_error": 1.09033203125,
+        "mean_abs_error": 0.07302074879407883,
+        "cosine_similarity": 0.9774801731109619
+      },
+      {
+        "video_id": "Training_Normal_Videos_Anomaly/Normal_Videos307_x264.mp4",
+        "start": 311096,
+        "max_abs_error": 0.748291015625,
+        "mean_abs_error": 0.07740070670843124,
+        "cosine_similarity": 0.9775568246841431
+      },
+      {
+        "video_id": "Shooting/Shooting001_x264.mp4",
+        "start": 0,
+        "max_abs_error": 1.29248046875,
+        "mean_abs_error": 0.10798420757055283,
+        "cosine_similarity": 0.9512631893157959
+      },
+      {
+        "video_id": "Shooting/Shooting001_x264.mp4",
+        "start": 56,
+        "max_abs_error": 1.1689453125,
+        "mean_abs_error": 0.1063375473022461,
+        "cosine_similarity": 0.9535055160522461
+      },
+      {
+        "video_id": "Shooting/Shooting001_x264.mp4",
+        "start": 104,
+        "max_abs_error": 1.0009765625,
+        "mean_abs_error": 0.09644263982772827,
+        "cosine_similarity": 0.9609309434890747
+      },
+      {
+        "video_id": "Fighting/Fighting002_x264.mp4",
+        "start": 0,
+        "max_abs_error": 1.1514892578125,
+        "mean_abs_error": 0.0831555649638176,
+        "cosine_similarity": 0.9698078036308289
+      },
+      {
+        "video_id": "Fighting/Fighting002_x264.mp4",
+        "start": 688,
+        "max_abs_error": 1.25860595703125,
+        "mean_abs_error": 0.09513064473867416,
+        "cosine_similarity": 0.9633773565292358
+      },
+      {
+        "video_id": "Fighting/Fighting002_x264.mp4",
+        "start": 1328,
+        "max_abs_error": 1.2237548828125,
+        "mean_abs_error": 0.09175348281860352,
+        "cosine_similarity": 0.9657513499259949
+      },
+      {
+        "video_id": "Shoplifting/Shoplifting040_x264.mp4",
+        "start": 16,
+        "max_abs_error": 1.03125,
+        "mean_abs_error": 0.05047887563705444,
+        "cosine_similarity": 0.9879253506660461
+      },
+      {
+        "video_id": "Shoplifting/Shoplifting040_x264.mp4",
+        "start": 6424,
+        "max_abs_error": 0.291015625,
+        "mean_abs_error": 0.0384647510945797,
+        "cosine_similarity": 0.9946121573448181
+      },
+      {
+        "video_id": "Shoplifting/Shoplifting040_x264.mp4",
+        "start": 13576,
+        "max_abs_error": 1.16796875,
+        "mean_abs_error": 0.053635258227586746,
+        "cosine_similarity": 0.9870517253875732
+      }
+    ]
+  }
+}

@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "evidence_id": "historical_14_class_v1",
+  "reconciled_on": "2026-09-05",
+  "scope": "Historical E0-E2 14-class evidence only; no model was trained or evaluated during reconciliation.",
+  "classification_vocabulary": {
+    "VERIFIED_HISTORICAL_OUTPUT": "A surviving immutable output has sufficient per-video data for independent metric, confusion-matrix, and prediction-distribution recomputation. This does not imply a fully rerunnable contemporaneous environment.",
+    "EXPLORATORY_VALIDATION_ONLY": "A surviving training record supports a development-time validation observation but not a fixed external test claim or causal conclusion.",
+    "UNUSABLE_UNVERIFIED": "A number or composite row lacks the artifact chain required for a thesis result and must not be retained as quantitative evidence."
+  },
+  "task": {
+    "label_space": "single-label 14-class classification",
+    "normal_class_index": 0,
+    "class_names": [
+      "Normal",
+      "Abuse",
+      "Arrest",
+      "Arson",
+      "Assault",
+      "Burglary",
+      "Explosion",
+      "Fighting",
+      "RoadAccidents",
+      "Robbery",
+      "Shooting",
+      "Shoplifting",
+      "Stealing",
+      "Vandalism"
+    ],
+    "metric_definition": "Unweighted arithmetic mean across all 14 class-wise values. A class with no true positives has F1=0; any absent true class would also contribute recall=0. Accuracy is correct predictions divided by videos.",
+    "confusion_matrix_orientation": "rows=true class, columns=predicted class",
+    "external_evaluation_decision_rule": "argmax over 14 composed hierarchical probabilities",
+    "training_validation_decision_rule": "binary-head argmax gates either Normal or anomaly-head argmax",
+    "external_bag_protocol": {
+      "bag_size": 16,
+      "sampler_epoch": 0,
+      "sampler_regime": "deterministic uniform warm-up selection",
+      "seed": 1337
+    },
+    "split_files": {
+      "train": {
+        "path": "data/ucf_crime/splits/dman_v21/train.txt",
+        "sha256": "2503cb60061760475f2c81d690819e5c72bf3309f8954ac69bc5f195bb749db1",
+        "count_videos": 1449
+      },
+      "val": {
+        "path": "data/ucf_crime/splits/dman_v21/val.txt",
+        "sha256": "d9a0edcbf3d38b1e4a43dc6db38b354ef22dbce21aaa28e93bdd4756223f1bcd",
+        "count_videos": 161
+      },
+      "test": {
+        "path": "data/ucf_crime/splits/dman_v21/test.txt",
+        "sha256": "afcb2a6bffe7286607e08c864425964d8784cbd5b1f263e03b76025e11548de7",
+        "count_videos": 290
+      }
+    },
+    "videos_index": {
+      "path": "data/ucf_crime/artifacts/dman_v21/clip_index/videos.jsonl",
+      "sha256": "dfb7fab0ef6dc5e155f1a14dbedd9b30d391a87dd9515f70fc77d0a7aae96bac"
+    }
+  },
+  "implementation_snapshot": {
+    "qualification": "Current tracked sources explain the surviving files, but the historical runs predate the first Git commit containing these configs/evaluators; no contemporaneous clean source commit or resolved-config manifest survives.",
+    "files": {
+      "stage2_class/configs/hierA_dual_head.yaml": "5d85ef8d160eb3c127979b87b3be0e07ecbb6c81aa414ae3edff3d77b76dd266",
+      "stage2_class/configs/hierA_lora_features.yaml": "f92141a95fe88de7edda53e23812e0cd989eda7657b89ee1c18dfb3540bc9aa7",
+      "stage2_class/src/eval/m27_eval_hier_split.py": "cbda8bac9ed75050193f6259c219b5a381ff07305ac766b67b58504facae5eaf",
+      "stage2_class/src/train/m27_train_hier_mil.py": "6138c255b25315e9e366dce2bfbb22a57fbffab3718d0ff2bcf7724b94af7e34",
+      "stage2_class/src/models/mil_hierarchical.py": "f1e864aab745f20d1bd5096991802e529535f1744e02fef4443619cb001064d8",
+      "stage2_class/src/data/mg_mil_sampler.py": "c67c31eee079d6240dd7289bb89093876798f325d0fb86121c74f72b777bb375"
+    }
+  },
+  "inputs": {
+    "frozen_feature_store": {
+      "path": "data/ucf_crime/artifacts/dman_v21/features",
+      "identity_algorithm": "phase1_feature_store_identity_v1",
+      "split_identities": {
+        "train": "213c0b6664d737e224b180e0d23a6881fa5115479606a2d19fd8d18461e73780",
+        "val": "ae11d500edb43d223f0d2b4fcabd9750dbbb0589255a2932d3492598dcf3e325",
+        "test": "f94149643a0e512f3cd5e8c83c879ee536395efe9ba34ceb15dc831f10b42b7f"
+      }
+    },
+    "lora_feature_store": {
+      "path": "data/ucf_crime/artifacts/dman_v21/features_lora",
+      "identity_algorithm": "phase1_feature_store_identity_v1",
+      "split_identities": {
+        "train": "7a4fb455d9fe7741fee7bb99fb5fea437de7f4e30beca8912e6971c56bf31788",
+        "val": "c0a8ed81ccfe39ab86468a2d20018ca13d642dd4ac77ec1fc70cc44ebb020c41",
+        "test": "96c4902ee26454a4facb405252342af309b03e3140252b3e4bdc742423d5cc36"
+      }
+    },
+    "frozen_teacher_scores": {
+      "association": "The .frozen_backup files preserve the teacher inputs that preceded the LoRA pipeline overwrite; the association is supported by file history and pipeline behavior but was not embedded as hashes in the historical run.",
+      "files": {
+        "artifacts/stage2/teacher/teacher_scores_train.pt.frozen_backup": "996ea525868174e1c0dd66a1eb6b3f63e5b65a8821329d52a2094caddd21a376",
+        "artifacts/stage2/teacher/teacher_scores_val.pt.frozen_backup": "da80531845a0f20bc9c6754f1ecb6ba496ee7c88752edd0629d7a001c048a6dd",
+        "artifacts/stage2/teacher/teacher_scores_test.pt.frozen_backup": "c9ce1c50e50532177807db09d6c03f577f14574006a4da57e7ac8e7f1328cc58"
+      },
+      "prototype": {
+        "path": "artifacts/stage2/memory/global_prototypes_k100.pt",
+        "sha256": "a73dafc6c710420a91a3390f359441123aebacadfa4feaa49bec55034d268957"
+      }
+    },
+    "lora_teacher_scores": {
+      "association": "run_lora_pipeline.sh copies teacher_lora into teacher before the LoRA 14-class run; current teacher files are byte-identical to teacher_lora.",
+      "files": {
+        "artifacts/stage2/teacher/teacher_scores_train.pt": "83e606c383a6cc9d35a94a58ef0f5a6a6fb0767529da70aa9840d77eccbfab90",
+        "artifacts/stage2/teacher/teacher_scores_val.pt": "0560aeb8ea7154cb172962e692333a9f25e82b838b57889f8f4077df59baa272",
+        "artifacts/stage2/teacher/teacher_scores_test.pt": "0dbf85a9ce4f87dd4e2084276e50380fbbede9a538ab1018d6bf04c68b483111"
+      },
+      "prototype": {
+        "path": "artifacts/stage2/memory_lora/global_prototypes_k100.pt",
+        "sha256": "d47f04d8a7184423473189a7669e6ff71f3bea9335aa7fb923c8c89883dbd31d"
+      }
+    }
+  },
+  "experiments": {
+    "hier_cascaded_v3": {
+      "classification": "VERIFIED_HISTORICAL_OUTPUT",
+      "feature_source": "frozen_feature_store",
+      "config": "stage2_class/configs/hierA_dual_head.yaml",
+      "selected_epoch": 15,
+      "checkpoint_selection_validation": {
+        "macro_f1": 0.2588880074174192,
+        "classification": "EXPLORATORY_VALIDATION_ONLY",
+        "qualification": "Epoch-specific guided bags and the training cascaded decision rule; not the fixed external validation protocol."
+      },
+      "external_val": {
+        "count_videos": 161,
+        "accuracy": 0.5031055900621118,
+        "macro_recall": 0.08928571428571429,
+        "macro_f1": 0.07659063625450181,
+        "prediction_distribution": {"0": 158, "1": 1, "3": 1, "6": 1}
+      },
+      "external_test": {
+        "count_videos": 290,
+        "accuracy": 0.5275862068965518,
+        "macro_recall": 0.09070294784580499,
+        "macro_f1": 0.07395382395382395,
+        "prediction_distribution": {"0": 282, "3": 7, "6": 1},
+        "binary": {
+          "threshold_selected_on_val": 0.46207207441329956,
+          "precision": 0.8863636363636364,
+          "recall": 0.8357142857142857,
+          "f1": 0.8602941176470588,
+          "auroc": 0.9184761904761904
+        }
+      },
+      "files": {
+        "artifacts/stage2/eval/hier_cascaded_v3/phase2_test.json": "aad7890959e0d0c006ed7ce53c666ed226c2acfba45474c1b82f88eb243b9618",
+        "artifacts/stage2/eval/hier_cascaded_v3/phase2_val.json": "95ff1380cf9a9eaab3a3c728ffd19a142ec4a5a69fbaf948654d662a40b90820",
+        "artifacts/stage2/eval/hier_cascaded_v3/phase2_confusion_test.json": "09ae22fdeec012aacf54c70026a98d3a61bac02cbbf196e3e467660569c22ce9",
+        "artifacts/stage2/eval/hier_cascaded_v3/phase2_binary_threshold.json": "84306d06b8d57bbdc34604b4d2a27d4a184d050e8b69efddef26c4ee1fc264f9",
+        "artifacts/stage2/eval/hier_cascaded_v3/phase2_binary_val.json": "d1c6220e03bca8fecb7d62d2bda0b050125882794325f45cbbaa93a6cf7e5b70",
+        "artifacts/stage2/eval/hier_cascaded_v3/phase2_binary_test.json": "c4809510cb5411f5a205c6e1b73eb62e05138e275cf12eef9fdfac70cf2d0cd1",
+        "artifacts/stage2/runs/hier_cascaded_v3/checkpoints/mil_best.pt": "90a3631d1a44c58828c6b491d03ad9b3b1e9467d04954d5a2f5082a47062131e",
+        "artifacts/stage2/runs/hier_cascaded_v3/label_map/label_map.json": "eb9a75937545294bdb82753d1fc90bc0013dff6bf110b84056dec1b56b329947",
+        "artifacts/stage2/runs/hier_cascaded_v3/train/m27_val_metrics.json": "981f11b8adae090124bb5833ae520ec4e61e5c26afbab679a14466f386f66bc2",
+        "artifacts/stage2/runs/hier_cascaded_v3/train/m27_train_log.jsonl": "8d6077ae27d4032bdf9b9bb9a05441946f52b0b3990c219434a31b5e082d45e6"
+      }
+    },
+    "hier_lora_e2e": {
+      "classification": "VERIFIED_HISTORICAL_OUTPUT",
+      "feature_source": "lora_feature_store",
+      "config": "stage2_class/configs/hierA_lora_features.yaml",
+      "selected_epoch": 14,
+      "checkpoint_selection_validation": {
+        "macro_f1": 0.23271115120386474,
+        "classification": "EXPLORATORY_VALIDATION_ONLY",
+        "qualification": "Epoch-specific guided bags and the training cascaded decision rule; not the fixed external validation protocol."
+      },
+      "external_val": {
+        "count_videos": 161,
+        "accuracy": 0.546583850931677,
+        "macro_recall": 0.23872863247863246,
+        "macro_f1": 0.2143361317453611,
+        "prediction_distribution": {"0": 93, "1": 6, "2": 1, "3": 13, "4": 4, "5": 4, "6": 1, "7": 10, "8": 3, "9": 1, "10": 3, "11": 5, "12": 13, "13": 4}
+      },
+      "external_test": {
+        "count_videos": 290,
+        "accuracy": 0.5724137931034483,
+        "macro_recall": 0.22061429253975837,
+        "macro_f1": 0.19611839475832898,
+        "prediction_distribution": {"0": 175, "1": 8, "2": 2, "3": 23, "4": 6, "5": 10, "6": 3, "7": 23, "8": 7, "9": 3, "10": 1, "11": 12, "12": 12, "13": 5},
+        "binary": {
+          "threshold_selected_on_val": 0.2526935935020447,
+          "precision": 0.8543046357615894,
+          "recall": 0.9214285714285714,
+          "f1": 0.88659793814433,
+          "auroc": 0.9411428571428572
+        }
+      },
+      "files": {
+        "artifacts/stage2/eval/hier_lora_e2e/phase2_test.json": "6e7d2fe105cab2fc86bb56de20c60ae3ac89d74054692a53d9ee53befc753337",
+        "artifacts/stage2/eval/hier_lora_e2e/phase2_val.json": "c885e543ca6a974a9b41d5004063bc50ee43853efd18f202788ed56855f9554e",
+        "artifacts/stage2/eval/hier_lora_e2e/phase2_confusion_test.json": "a07822a4fcf69f69f3c1681a50a0eef20c02ed7e5f7e80d2fd94e704a76d775d",
+        "artifacts/stage2/eval/hier_lora_e2e/phase2_binary_threshold.json": "9b3233ad9701ee4138f6500ebb7937e8b3fbca2758473396ae778584f2c785da",
+        "artifacts/stage2/eval/hier_lora_e2e/phase2_binary_val.json": "48440b39580cd0427668fc8fc95c6d25bfcdc4d2628c3051d81487ea42201e0a",
+        "artifacts/stage2/eval/hier_lora_e2e/phase2_binary_test.json": "98e8bb488542d2915708216b0e4183fe42659438032944f0f4cd83a761a82c3a",
+        "artifacts/stage2/runs/hier_lora_e2e/checkpoints/mil_best.pt": "a0fdd336c495054f7062b9ef484faee1f6d439c3894a4fffeb65b77960489563",
+        "artifacts/stage2/runs/hier_lora_e2e/label_map/label_map.json": "eb9a75937545294bdb82753d1fc90bc0013dff6bf110b84056dec1b56b329947",
+        "artifacts/stage2/runs/hier_lora_e2e/train/m27_val_metrics.json": "89110ea658862e1028726ea23f4f210f3c71bc4e135eed3ad55169b84cb962ef",
+        "artifacts/stage2/runs/hier_lora_e2e/train/m27_train_log.jsonl": "74d7ee4391e4883352e4c06ddf5cad2705914ccc3e6042c82a9fb4f1809d1ba9"
+      }
+    }
+  },
+  "negative_runs": {
+    "classification": "EXPLORATORY_VALIDATION_ONLY",
+    "shared_observation": "Each surviving nine-epoch log reports validation Macro-F1 0.04742145820983995, validation accuracy 80/161, Macro-Recall 1/14, and prediction distribution {0:161} at every epoch.",
+    "qualification": "These runs document validation collapse. They do not identify a flat-softmax E0 test experiment, and incomplete contemporaneous configs prevent controlled causal attribution.",
+    "runs": {
+      "hierA_dual_head": {
+        "checkpoint": ["artifacts/stage2/runs/hierA_dual_head/checkpoints/mil_best.pt", "0f0d38e40b444d3531d27a079afcef9da2b2baeb2f22967d8a54061524a55a47"],
+        "summary": ["artifacts/stage2/runs/hierA_dual_head/train/m27_val_metrics.json", "2ada50766a8d456a48e2b57eeab84bcec23bb7b6d40899d2dea6bcbb4eb7003e"],
+        "log": ["artifacts/stage2/runs/hierA_dual_head/train/m27_train_log.jsonl", "4ae3a4cb69f46170ddef7b659a7d9df7dd83a06fbe56849149ef618b836a4525"]
+      },
+      "hierA_dual_head_v2": {
+        "checkpoint": ["artifacts/stage2/runs/hierA_dual_head_v2/checkpoints/mil_best.pt", "7bc0260ef9187b8a1e3d340dd436ad2b4c4be721acb5d294a0cc083467cfbdfe"],
+        "summary": ["artifacts/stage2/runs/hierA_dual_head_v2/train/m27_val_metrics.json", "f36d47e23748bfa450d51cfd2b05c183441de02bf0cbbf9c6a442163fdcece16"],
+        "log": ["artifacts/stage2/runs/hierA_dual_head_v2/train/m27_train_log.jsonl", "04da46685444c4f488a5559c857948fc8e274cbb42d967df77de9db0befa9e3a"]
+      },
+      "hier_decoupled_v2": {
+        "checkpoint": ["artifacts/stage2/runs/hier_decoupled_v2/checkpoints/mil_best.pt", "e4b1e5b08ae7f47e344aeebde4df986dcf19da97f185510ad4b526458ba59295"],
+        "summary": ["artifacts/stage2/runs/hier_decoupled_v2/train/m27_val_metrics.json", "d1a755175443937e930e01498c717acf1d1446a211d13b843cef724c57afde5e"],
+        "log": ["artifacts/stage2/runs/hier_decoupled_v2/train/m27_train_log.jsonl", "97bf11d4044b11cd30f6a2571c7935e39b3c27688b04d2f915fba43886c05b1f"]
+      },
+      "hier_topk_focal_v1": {
+        "checkpoint": ["artifacts/stage2/runs/hier_topk_focal_v1/checkpoints/mil_best.pt", "fdc1193a56de1a7d03bfb83d1e6147453a7845b449687f6c5b99c32932a640e9"],
+        "summary": ["artifacts/stage2/runs/hier_topk_focal_v1/train/m27_val_metrics.json", "39a59cfee9ce2660204ac7889848dbfa1d3d32386304e2bb9dcf254766237163"],
+        "log": ["artifacts/stage2/runs/hier_topk_focal_v1/train/m27_train_log.jsonl", "dae4a057e4f1e251dd2292d24f24a67943758dd6bc8734d860c87dd23fb6ac01"]
+      }
+    }
+  },
+  "composite_row_source_trace": {
+    "e1_multiclass_values": {
+      "actual_run_tag": "baseline",
+      "values": {
+        "test_macro_f1": 0.17415535545778996,
+        "test_macro_recall": 0.20009479823144422,
+        "test_accuracy": 0.5310344827586206
+      },
+      "evaluation_file": [
+        "artifacts/stage2/eval/baseline/phase2_test.json",
+        "cd501c96a0297a0887949cd288fc556b9cd988f00b6b34df84914bd85d67f42e"
+      ],
+      "checkpoint": [
+        "artifacts/stage2/runs/baseline/checkpoints/mil_best.pt",
+        "c2519f5665e9b5bbceb93bae06650dbe12a0e1de520cee48ae2d51de7ecdd8b7"
+      ],
+      "config": [
+        "stage2_class/configs/base.yaml",
+        "43bbcacbf15307709fffd20b5f468bdad3dd4e8b686d3a079fbfd365de87ee61"
+      ],
+      "finding": "The rounded E1 multiclass cells came from baseline, while its binary cells came from hier_cascaded_v3; the resulting E1 row is not one experiment."
+    },
+    "e2_recall_and_accuracy_values": {
+      "actual_run_tag": "ablA_no_injection",
+      "values": {
+        "test_macro_recall": 0.20570268241075693,
+        "test_accuracy": 0.5448275862068965,
+        "test_macro_f1": 0.19348311480091146
+      },
+      "evaluation_file": [
+        "legacy/stage2_cleanup_2026_03_13/support_eval/ablA_no_injection/phase2_test.json",
+        "f12c19778c150ca0b33b7b35ed4b952695dfd5b9fa8cf856ca64e07f93a5a891"
+      ],
+      "checkpoint": [
+        "legacy/stage2_cleanup_2026_03_13/support_runs/ablA_no_injection/checkpoints/mil_best.pt",
+        "4ffe5392cf524551642fad441ce0dcec5de80bc0dd09aa81d0e0eaec98a2efb6"
+      ],
+      "finding": "The rounded E2 recall and accuracy cells came from the no-injection ablation, while the Macro-F1 and binary cells came from hier_lora_e2e; the resulting E2 row is not one experiment."
+    },
+    "unsupported_binary_auroc_cells": {
+      "values": [0.812, 0.8431, 0.8654],
+      "finding": "These exact E0/E1/E2 AUROC values were found only in prose/table narratives, not in matching evaluation outputs for the named rows."
+    }
+  },
+  "disputed_claims": [
+    {
+      "claim": "hier_cascaded_v3 test Macro-F1 = 0.17726588267035548",
+      "classification": "UNUSABLE_UNVERIFIED",
+      "reason": "The exact number survives only in registries/narratives introduced later; no evaluation JSON, predictions, confusion matrix, or hash chain producing it survives. The named run's direct test file instead recomputes to 0.07395382395382395."
+    },
+    {
+      "claim": "hier_lora_e2e test Macro-F1 = 0.19639598020815456",
+      "classification": "UNUSABLE_UNVERIFIED",
+      "reason": "The exact number survives only in registries/narratives; the named direct test file recomputes to 0.19611839475832898."
+    },
+    {
+      "claim": "E0 flat-softmax test row with Macro-F1 0.0474",
+      "classification": "UNUSABLE_UNVERIFIED",
+      "reason": "0.04742145820983995 is a validation-only value from hierarchical dual-head development runs whose predictions were all Normal. No matching flat-softmax E0 test evaluation was found."
+    },
+    {
+      "claim": "Published E1 and E2 rows are internally coherent experiment rows",
+      "classification": "UNUSABLE_UNVERIFIED",
+      "reason": "E1 combines baseline multiclass values with hier_cascaded_v3 binary values; E2 combines direct LoRA values with values traceable to other ablations or unsupported narrative-only numbers."
+    }
+  ],
+  "comparability": {
+    "descriptive_output_comparison": "PERMITTED_ONLY_WITH_EXPLICIT_NONCONTROLLED_QUALIFICATION",
+    "causal_lora_gain_claim": "PROHIBITED",
+    "matching_factors": [
+      "same dman_v21 validation/test video IDs and counts",
+      "same 14-label order",
+      "same surviving external evaluator and argmax-composed decision rule",
+      "same deterministic epoch-0 fixed-size uniform bag protocol and seed"
+    ],
+    "material_nonmatching_or_unknown_factors": [
+      "feature and teacher/prototype stores differ by design",
+      "training hyperparameters and early-stopping schedules differ",
+      "checkpoint selection used epoch-specific teacher-guided validation bags",
+      "training validation and external evaluation use different decision rules",
+      "no contemporaneous resolved config, source commit, environment manifest, or run manifest survives"
+    ],
+    "dispatch_relation": "The later dispatch task has three non-exclusive project-derived response channels plus a separate binary output. It is neither the same label space nor the same objective/metric denominator as single-label 14-class classification, so direct numerical gain and causal improvement claims are prohibited.",
+    "evidence_bounded_motivation": "The frozen direct output predicts Normal for 282/290 test videos, and the LoRA direct output remains weak at 0.196118 Macro-F1 despite a broader prediction distribution. These observations can motivate investigating a response-oriented output space, but do not show that reformulation improved or solved the original task."
+  }
+}
