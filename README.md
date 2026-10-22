@@ -108,8 +108,8 @@ Configurations behind the reported runs:
 Tested on Ubuntu 24.04 (WSL2) with Python 3.12.3 and one NVIDIA RTX 4050 Laptop GPU (6 GB). Verification and single-video inference also run on CPU.
 
 ```bash
-git clone https://github.com/PranavMaheshwari06/Weakly-supervised-Video-Anomaly-Detection.git
-cd Weakly-supervised-Video-Anomaly-Detection
+git clone https://git.fim.uni-passau.de/maheshwari/pranav_master_thesis_115047.git
+cd pranav_master_thesis_115047
 python3.12 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -122,10 +122,9 @@ All commands below are run from the repository root with this environment active
 
 No large file is stored in Git.
 
-1. **Evidence bundle** (`thesis-evidence-core-v1.tar.gz`, 0.35 GB, about 0.5 GB unpacked). It is attached to the [v1.0 release](https://github.com/PranavMaheshwari06/Weakly-supervised-Video-Anomaly-Detection/releases/tag/v1.0) together with `SHA256SUMS`. Unpack it at the repository root; it restores the original paths under `artifacts/`, `data/ucf_crime/` and `legacy/`, all of which Git ignores.
+1. **Evidence bundle** (`thesis-evidence-core-v1.tar.gz`, 0.35 GB, about 0.5 GB unpacked). It is delivered separately from this repository, together with `SHA256SUMS`. Place both files at the repository root and unpack the archive there; it restores the original paths under `artifacts/`, `data/ucf_crime/` and `legacy/`, all of which Git ignores.
 
    ```bash
-   gh release download v1.0      # or download both files from the release page
    sha256sum -c SHA256SUMS
    tar -xzf thesis-evidence-core-v1.tar.gz
    ```
