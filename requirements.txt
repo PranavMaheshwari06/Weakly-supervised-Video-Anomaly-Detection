@@ -1,9 +1,14 @@
 # Python 3.12.3. Versions of the environment in which the reported evidence was
 # produced and verified; see reproducibility/ENVIRONMENT.md for which of them the
 # official run manifests record.
+#
+# torch and torchvision were run as the CUDA 12.1 builds (2.5.1+cu121, 0.20.1+cu121).
+# The extra index below provides these builds on Linux and Windows. On macOS pip falls
+# back to the default build of the same version. Every check and the single-video
+# inference in README.md also run on CPU.
 --extra-index-url https://download.pytorch.org/whl/cu121
-torch==2.5.1+cu121
-torchvision==0.20.1+cu121
+torch==2.5.1
+torchvision==0.20.1
 transformers==5.12.0
 peft==0.19.1
 safetensors==0.7.0
