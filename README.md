@@ -23,6 +23,7 @@ The stages are trained one after another. Gradients from Stage 2 never reach the
 - [Data and trained artifacts](#data-and-trained-artifacts)
 - [Verifying the reported results](#verifying-the-reported-results)
 - [Running the model on a UCF-Crime video](#running-the-model-on-a-ucf-crime-video)
+- [Building the thesis](#building-the-thesis)
 - [Re-running the pipeline](#re-running-the-pipeline)
 - [Notes on the recorded evidence](#notes-on-the-recorded-evidence)
 
@@ -43,6 +44,8 @@ UCF-Crime test split (290 videos), three Stage-2 training seeds (1337, 2027, 340
 
 The binary values are video-level and are not comparable with the frame-level AUC usually reported for UCF-Crime.
 
+Paired video-level bootstrap intervals (95% percentile, 10,000 resamples, mean over the three seeds per resample; they cover video sampling only, not training variance): binary AUROC 0.910 to 0.967; binary-gated learned Macro-F1 minus binary-gated all-services reference 0.008 to 0.023; temporal AP minus the whole-video reference 0.110 to 0.164.
+
 The main findings:
 - Video-level anomaly detection is consistent across seeds and evaluation protocols.
 - The raw response head has recall near one but low precision, and it predicts Police for every video.
@@ -55,10 +58,11 @@ The main findings:
 | Fixed-bag binary and response metrics | [`reproducibility/evidence/dispatch_repro_v1/summary.json`](reproducibility/evidence/dispatch_repro_v1/summary.json) |
 | Historical 14-class models | [`reproducibility/evidence/historical_14_class_v1/summary.json`](reproducibility/evidence/historical_14_class_v1/summary.json) |
 | Normal-bag response-loss study (validation) | [`reproducibility/evidence/normal_bag_response_study/summary.json`](reproducibility/evidence/normal_bag_response_study/summary.json) |
-| Teacher ablation (validation) | `artifacts/stage2/evidence/teacher_ablation_v1/summary.json` (evidence bundle) |
+| Prototype-distance study (validation; `teacher_ablation` in the code) | `artifacts/stage2/evidence/teacher_ablation_v1/summary.json` (evidence bundle) |
 | Dense routing, temporal grounding, coverage | `artifacts/stage2/evidence/temporal_system_v1/summary.json` (evidence bundle) |
+| Bootstrap intervals | [`reproducibility/evidence/bootstrap_v1/bootstrap_cis.json`](reproducibility/evidence/bootstrap_v1/bootstrap_cis.json) |
 | Per-run validation and test evaluations | `artifacts/stage2/eval/<run_tag>/` (evidence bundle) |
-| Thesis figures | `artifacts/thesis_figures/phase6/` (evidence bundle) |
+| Thesis figures | `artifacts/thesis_figures/phase6/` (evidence bundle); the figures of the final thesis are in [`thesis_final/images/`](thesis_final/images/) |
 
 [`reproducibility/PROVENANCE.md`](reproducibility/PROVENANCE.md) lists the SHA-256 hashes of every input and output behind these numbers, together with the recorded command that produced each of them.
 
@@ -69,18 +73,19 @@ The main findings:
 | 0 | Fixed train/val/test split (1,449 / 161 / 290 videos) and deterministic clip index | `stage0_data/` | Methods: *Dataset Partition and Deterministic Clip Index* |
 | 1 | Frozen VideoMAE-Base clip features, normal selection, prototypes and clip scores. Used for the pre-LoRA teacher and the historical 14-class model | `stage1_features/`, `stage2_class/src/{preprocess,memory,teacher}/` | Methods: *VideoMAE Representation and Low-Rank Adaptation*. Results: *Historical 14-Class Development Outputs* |
 | 1b | LoRA adaptation of VideoMAE, adapted feature store for all 1,900 videos, 100 normal prototypes, teacher distance score per clip | `stage1b_finetune/` | Methods: *VideoMAE Representation and Low-Rank Adaptation*; *Normal Prototype Memory and Distance Signal* |
-| 2 | Attention MIL with shared attention, a binary head and a three-channel response head. The teacher score is appended to each clip embedding and guides training-bag construction | `stage2_class/src/{data,models,train}/`, `stage2_class/configs/hierA_dispatch_v1.yaml` | Methods: *Stage-2 Attention MIL Model*; *Training Objectives and Model Selection*. Results: *Official Fixed-Bag Binary Anomaly Results*; *Raw Three-Channel Response Results*; *Anomaly-Conditional and Binary-Gated Routing*; *Matched Trivial Baselines* |
-| Studies | Teacher ablation and normal-bag response-loss study, both validation only | `stage2_class/configs/teacher_ablation_*.yaml`, `stage2_class/configs/abl_normal_response*_v1.yaml` | Methods: *Validation-Only Teacher-Mechanism Study*; *Post-Hoc Normal-Bag Response-Loss Study*. Results: *Validation-Only Teacher Ablation*; *Normal-Bag Response-Loss Study (Validation Only)* |
+| 2 | Attention MIL with shared attention, a binary head and a three-channel response head. The teacher score is appended to each clip embedding and guides training-bag construction | `stage2_class/src/{data,models,train}/`, `stage2_class/configs/hierA_dispatch_v1.yaml` | Methods: *Stage-2 Attention MIL Model*; *Training Objectives and Model Selection*. Results: *Official Fixed-Bag Binary Anomaly Results*; *Raw Three-Channel Response Results*; *Binary-Gated Routing and Matched Baselines* |
+| Studies | Prototype-distance study (`teacher_ablation` in the code) and normal-bag response-loss study, both validation only | `stage2_class/configs/teacher_ablation_*.yaml`, `stage2_class/configs/abl_normal_response*_v1.yaml` | Methods: *Validation-Only Prototype-Distance Study*; *Post-Hoc Normal-Bag Response-Loss Study*. Results: *Validation-Only Prototype-Distance Study*; *Normal-Bag Response-Loss Study (Validation Only)* |
 | Evaluation | Fixed-bag and dense indexed evaluation | `stage2_class/src/eval/`, `utils/evaluate_temporal_system.py` | Methods: *Fixed-Bag and Dense Indexed Evaluation* |
-| Temporal | Frame-level AP and fixed-rule IoU of the attention weights under a frozen protocol | `stage2_class/src/eval/temporal_*.py`, `utils/*temporal*.py`, `reproducibility/temporal_protocol/` | Methods: *Temporal Grounding Protocol*. Results: *Dense Indexed-System and Temporal-Grounding Results* |
-| 3 | Binary-gated routing, CAD-style alert record and annotated video | `stage3_dispatch/`, `inference/inference_any_video.py` | Methods: *Offline CAD-Style Output*. Results: *Qualitative Offline CAD-Style Example* |
+| Temporal | Frame-level AP and fixed-rule IoU of the attention weights under a frozen protocol | `stage2_class/src/eval/temporal_*.py`, `utils/*temporal*.py`, `reproducibility/temporal_protocol/` | Methods: *Temporal Grounding Protocol*. Results: *Dense Indexed-System and Temporal-Grounding Results*; *Qualitative Success and Failure Cases* |
+| 3 | Binary-gated routing, CAD-style alert record and annotated video | `stage3_dispatch/`, `inference/inference_any_video.py` | Methods: *Offline CAD-Style Output*. Results: *Offline CAD-Style Example* |
+| Statistics and figures | Paired video bootstrap intervals and the print-size figures of the final thesis, both computed from the canonical evidence package | `utils/bootstrap_test_cis.py`, `utils/generate_revision_figures.py`, `utils/generate_phase6_figures.py` | Results: *Official Fixed-Bag Binary Anomaly Results*; *Binary-Gated Routing and Matched Baselines*; *Dense Indexed-System and Temporal-Grounding Results* |
 
 Configurations behind the reported runs:
 
 | Result | Config (`stage2_class/configs/`) | Run tags |
 |---|---|---|
 | Main three-seed results | `hierA_dispatch_v1.yaml` | `dispatch_repro_s{1337,2027,3407}` |
-| Teacher ablation (validation only) | `teacher_ablation_{full,neither,no_input,uniform}.yaml` | `ablation_*_s{1337,2027,3407}` |
+| Prototype-distance study (validation only) | `teacher_ablation_{full,neither,no_input,uniform}.yaml` | `ablation_*_s{1337,2027,3407}` |
 | Normal-bag response-loss study (validation only) | `abl_normal_response_v1.yaml`, `abl_normal_response_reweighted_v1.yaml` | `abl_normal_response[_reweighted]_v1_s*` |
 | Historical 14-class models | `hierA_dual_head.yaml`, `hierA_lora_features.yaml` | `hier_cascaded_v3`, `hier_lora_e2e` |
 | Dense temporal evaluation | frozen protocol in `reproducibility/temporal_protocol/` | `temporal_system_v1/attempt_002` |
@@ -97,10 +102,11 @@ Configurations behind the reported runs:
 | `stage2_class/` | MIL datasets, model, training, evaluation, configs and unit tests |
 | `stage3_dispatch/` | Response routing and CAD alert video rendering |
 | `inference/` | Inference and CAD alert for one indexed UCF-Crime video |
-| `utils/` | Dense temporal extraction and evaluation, evidence builders and verifiers, figure generation |
+| `utils/` | Dense temporal extraction and evaluation, evidence builders and verifiers, bootstrap intervals, figure generation |
 | `configs/` | Shared Stage 0/1 configuration |
 | `data/ucf_crime/splits/` | Official UCF-Crime split lists and the fixed split used in the thesis |
-| `reproducibility/` | Provenance record, environment record, evidence mirrors, frozen temporal protocol, recorded source for the teacher-ablation check |
+| `reproducibility/` | Provenance record, environment record, evidence mirrors (including the bootstrap intervals), frozen temporal protocol, recorded source for the prototype-distance (teacher-ablation) check |
+| `thesis_final/` | LaTeX sources of the thesis: `thesis.tex`, chapters, front matter, `bibliography.bib` and the figures the thesis includes |
 | `run_dispatch_pipeline.sh` | Stage 2 workflow for one seed: evaluation bags, training, validation evaluation |
 
 ## Installation
@@ -128,6 +134,8 @@ No large file is stored in Git.
    sha256sum -c SHA256SUMS
    tar -xzf thesis-evidence-core-v1.tar.gz
    ```
+
+   The bundle was built before the final revision. It does not contain the bootstrap output or the print-size revision figures; the bootstrap intervals are mirrored under `reproducibility/evidence/bootstrap_v1/` and the figures are in `thesis_final/images/`. None of the verifiers below needs them.
 
    The bundle contains:
    - the clip index and the LoRA-adapted feature store for all 1,900 videos;
@@ -166,13 +174,24 @@ python -B -m utils.verify_canonical_evidence_package --require-figures
 
 Each verifier ends with `PASS` or `"status": "pass"`. `--skip-raw-video-check` skips only the comparison of raw-video file sizes and modification times with the extraction records, which can match only on the original machine.
 
-**Teacher ablation.** `utils/verify_teacher_ablation_evidence.py` pins the hash of the trainer as it was when the ablation ran. The trainer later gained the two normal-bag study options, which are off by default (see the notes below). Run the check against the recorded trainer, then restore the current one:
+**Prototype-distance study (called teacher ablation in the code).** `utils/verify_teacher_ablation_evidence.py` pins the hash of the trainer as it was when the ablation ran. The trainer later gained the two normal-bag study options, which are off by default (see the notes below). Run the check against the recorded trainer, then restore the current one:
 
 ```bash
 cp reproducibility/recorded_sources/m27_train_dispatch_mil.py stage2_class/src/train/
 python -B utils/verify_teacher_ablation_evidence.py   # PASS: 12 runs, 84 artifacts, 48 recomputed metrics
 git checkout stage2_class/src/train/m27_train_dispatch_mil.py
 ```
+
+## Building the thesis
+
+The sources are in `thesis_final/`. They need `lualatex` and `biber` (both in TeX Live). No evidence bundle is needed.
+
+```bash
+cd thesis_final
+latexmk -lualatex thesis.tex
+```
+
+Run the command a second time if `latexmk` stops after creating the `chapters/` and `includes/` output folders; that happens when `-outdir` points to a new directory. The title-page date is the compile date, so build the PDF on the day it is handed in. The build is 93 pages without overfull boxes.
 
 ## Running the model on a UCF-Crime video
 

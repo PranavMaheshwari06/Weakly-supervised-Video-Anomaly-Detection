@@ -1,0 +1,33 @@
+% !TeX spellcheck = en_US
+% !TeX encoding = UTF-8
+\chapter*{Abstract}
+\markboth{Abstract}{Abstract}
+
+This thesis builds and evaluates a weakly supervised pipeline that, for each
+UCF-Crime video, decides whether it is anomalous, which of three
+project-defined services (Police, Medical, Fire) it involves, and where the
+event occurs. The pipeline combines VideoMAE with low-rank adaptation (LoRA),
+frozen clip features, a normal-prototype distance, and an attention multiple
+instance learning model with a binary head and a three-channel response head.
+Each output is compared with a trivial reference on the same videos, and
+Stage-2 training is repeated with three seeds over a fixed feature store.
+
+Video-level binary detection was stable: on fixed 16-clip test bags, the area
+under the receiver operating characteristic curve was $0.940\pm0.002$ (mean
+$\pm$ standard deviation over the three Stage-2 seeds), a video-level value
+that is not comparable with frame-level UCF-Crime results. Response selection
+was weak. Without gating the head predicted Police for every video, and after
+binary gating it exceeded a rule that predicts every service for each detected
+anomaly by only 0.015 in Macro-F1 (95\% video bootstrap interval 0.008 to
+0.023). A validation-only extension that added normal bags to the response loss
+removed the universal Police output, but its gated margins stayed within the
+seed spread of the control. On a dense protocol covering 99.843\% of test-video
+frames, attention reached a temporal average precision of $0.327\pm0.014$ and
+an interval overlap of $0.186\pm0.017$, above trivial references but far from
+precise localization.
+
+The contribution is an offline implementation and a matched evaluation that
+keeps anomaly detection, response prediction, and temporal grounding separate.
+The response targets are deterministic transformations of dataset categories
+rather than observed service decisions, and the computer-aided dispatch
+(CAD)-style output has no calibration, safety, or operational validation.

@@ -120,7 +120,7 @@ generator version for that regeneration has SHA-256
 output is byte-identical across runs with `SOURCE_DATE_EPOCH=0`. The canonical
 `artifacts/thesis_figures/phase6/` directory was not overwritten; the command
 writes to a separate directory and the five PDFs were copied into the thesis
-sources (`thesis_final/images/`, not part of this repository):
+sources (`thesis_final/images/` in the development repository):
 
 ```
 MPLCONFIGDIR=/tmp/mpl SOURCE_DATE_EPOCH=0 venv/bin/python -c "
@@ -138,6 +138,10 @@ g.OUTPUT = Path('/tmp/r11_figures'); sys.argv = ['g', '--only'] + sys.argv[1:]; 
 | `thesis_final/images/fig_routing_comparison.pdf` | `93600d4246f5f1b7d9f48960141b7d098eef5d61da0f984d8399881875c3e610` |
 | `thesis_final/images/fig_temporal_ap_by_category.pdf` | `545eebc7509d8c52909ac149c7dd0e8d9688d2c04bb827a6bee3f75e138ada3d` |
 | `thesis_final/images/fig_temporal_cad_example.pdf` | `070cde351b0f536e40ec0dad3e5d477199e6599c23342b9df9714ca7641eac50` |
+
+The final thesis no longer includes any file of this table (see the R19 and R20
+sections below), and these files are not shipped in this repository. The hashes
+are kept as the record of the earlier versions.
 
 The rendered CAD-alert still frame added to Results
 (`thesis_final/images/fig_cad_frame_example.png`) was produced from the
@@ -161,6 +165,88 @@ Frame 75 (2.50 s) of that video is the figure, SHA-256
 `cefcfd054b58ccdafb28c7c13c51614008034e47bb04b6055592b2ca9e92df7e`. Video, alert
 record, and displayed values are unchanged; only the overlay styling differs
 from the first rendering.
+
+### R19 revision figures and bootstrap intervals
+
+Figures 3.1 and 3.2 are now drawn in TikZ inside `thesis_final/chapters/methods.tex`
+and contain no measured values; `fig_architecture_dataflow.pdf` and
+`fig_protocol_provenance.pdf` are no longer included. Four figures were drawn
+by `utils/generate_revision_figures.py` (SHA-256
+`08c96acdbb013261e13c7c0b09f7cedb3778169a55d45a8e3cfcbeec063e7451`) from the
+canonical package and the seed-1337 dense per-video records it lists (the
+script checks each record hash). It writes only to the new directory
+`artifacts/thesis_figures/revision_r19/`; the outputs were copied into
+`thesis_final/images/` under the names below. The qualitative cases are chosen
+by fixed rules in `select_cases()` (`--select-only` prints them).
+
+```
+python3 utils/generate_revision_figures.py
+```
+
+| File | SHA-256 |
+|---|---|
+| `thesis_final/images/fig_qualitative_cases.pdf` | `f10852a005e1d6c4e7751a983d024802d0376e97654591ef455e3c98455ff68f` |
+| `thesis_final/images/fig_response_vector_distribution.pdf` | `01251eaf25ad526b6e7d91b4269130f975d221042b60c7619a838ada944678ec` |
+| `thesis_final/images/fig_routing_comparison_r19.pdf` | `d51a1c8e4c52c90950523ad9bc2f2a6f0ade2f2d49af1551a07fcf6d298c7467` |
+| `thesis_final/images/fig_temporal_ap_by_category_r19.pdf` | `e6878c9157ca4b51a659df7d234e78a48ab4ca00dde2e8fccfeccb2b6e5f49bc` |
+
+These four R19 files were superseded by the R20 versions below and are not
+shipped in this repository.
+
+The paired video bootstrap intervals (B=10000, RNG seed 0, 95% percentile,
+mean over the three seeds per resample) were computed by
+`utils/bootstrap_test_cis.py` (SHA-256
+`f627ab62ab0b97bdb4fcb6e9c7f10832b202227a3e536a70dce322fd9b35e8fe`) from the
+same package and records. The script asserts that its point estimates
+reproduce the reported values and refuses to overwrite its output
+`artifacts/stage2/evidence/bootstrap_v1/bootstrap_cis.json`, mirrored to
+`reproducibility/evidence/bootstrap_v1/bootstrap_cis.json` (SHA-256
+`19b8daf25654f827a3dc796a4774d2007d8cc412df2ecea6bda7b42c7bbb4a9d`). Two
+independent runs produced identical results.
+
+```
+python3 utils/bootstrap_test_cis.py
+```
+
+### Figures redrawn at print size (R20)
+
+After the R19 draft, the figure labels were found to print below 8 pt. The five
+figures listed below replace the R19 versions of the same plots in the thesis.
+`utils/generate_revision_figures.py` was edited to draw them at the printed
+width with larger fonts (SHA-256 of the edited script
+`3831506adbe73b9436bc21be0e7ee5d28783daab152a35fbe0c20124468fd127`). The
+routing comparison now has its two panels stacked, and the script also draws
+the offline CAD timeline (previously drawn by the Phase-6 generator). The data
+come from the same canonical package and the same seed-1337 dense records; the
+selected cases and all plotted values are unchanged. The script writes only to
+the new directory `artifacts/thesis_figures/revision_r20/` and refuses to
+overwrite it; the R19 and Phase-6 directories were not changed.
+
+```
+python3 utils/generate_revision_figures.py
+```
+
+| File | SHA-256 |
+|---|---|
+| `thesis_final/images/fig_qualitative_cases_r20.pdf` | `340f860f1c277b365f64a6a168535ac1e6ada5793ee4efda16a7baa20bac4fc0` |
+| `thesis_final/images/fig_response_vector_distribution_r20.pdf` | `e4133fffacad1451e35ad234050cee474795e1f29dd6f30fa496e4fd42967c4f` |
+| `thesis_final/images/fig_routing_comparison_r20.pdf` | `410df183f9ec202b1bf9ed404493de7d75589c0851cadb6957c53ab18feac0cc` |
+| `thesis_final/images/fig_temporal_ap_by_category_r20.pdf` | `76e3acf4e57e0049d89da9d0523cae5da4f1d2c310ec486d78a26302f6fdbdb6` |
+| `thesis_final/images/fig_temporal_cad_example_r20.pdf` | `81c5e1fdfab702150fbd54564db4753fb95039c593698a38978181813839d695` |
+
+Re-running the script reproduces the plotted content but not the file hashes:
+matplotlib writes the creation time into every PDF. For the two files compared
+(qualitative cases and CAD timeline) the regenerated PDFs differ from the
+listed ones only in the 5 bytes of that time stamp. The hashes above identify
+the files included in the thesis.
+
+The title page now shows the chair line and the compile date, the declaration
+is the unmodified template text, and an acknowledgements page was added. None
+of these contain measured values. The R19 files listed above and the earlier
+figure files remain in the development repository's `thesis_final/images/` but
+are no longer included in the thesis and are not shipped here. This repository
+ships `thesis_final/images/` with the five R20 PDFs, `fig_cad_frame_example.png`
+and `uni-logo.png`.
 
 ## 8. Normal-bag response-loss study (validation only)
 

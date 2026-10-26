@@ -1,0 +1,500 @@
+% !TeX root = ../thesis.tex
+\chapter{Methods}
+\label{chap:methods}
+
+This chapter describes the implemented and evaluated pipeline from indexed video to an offline CAD-style record. The system combines deterministic clip construction, a parameter-efficiently adapted VideoMAE encoder, a normal-prototype distance signal, and a two-head attention MIL model. The response head predicts a project-defined set of Police, Medical, and Fire labels. These labels are deterministic transformations of UCF-Crime video categories; they are not observed emergency-service decisions or a validated dispatch ontology.
+
+The pipeline was optimized sequentially. VideoMAE adaptation was completed first. The selected adapter was then frozen to extract clip embeddings. Normal prototypes and distance scores were constructed from those embeddings before the Stage-2 MIL models were trained. The final MIL objective therefore did not propagate gradients back to video pixels or to the VideoMAE encoder. Figure~\ref{fig:method-overview} summarizes this data flow, while Figure~\ref{fig:protocol-overview} separates training, validation decisions, and final test execution.
+
+This sequence describes the final configuration; the components were developed in a different order. The first version of the pipeline used frozen VideoMAE features and the same two-head MIL family as Section~\ref{sec:stage2-model}, but its second head predicted one of 14 exclusive classes (Normal and the 13 anomaly categories). The LoRA adapter of Section~\ref{sec:videomae-lora} was then trained with that 14-class label space, which is why Stage~1b uses a temporary 14-class classifier, and the adapted feature store and normal-prototype memory used throughout this thesis were built from it. The three-channel response target replaced the category head only afterwards and was trained on the same features and prototypes, without adapting the encoder again; the retained 14-class outputs are reported as development history in Section~\ref{sec:results-historical}.
+
+\begin{figure}[tbp]
+    \centering
+    \footnotesize
+    \begin{tikzpicture}[
+        >={Stealth[length=2mm]},
+        box/.style={draw, rounded corners=1pt, align=center, font=\footnotesize,
+                    text width=25mm, minimum height=11mm, inner sep=2pt},
+        fixed/.style={box, fill=black!8},
+        train/.style={box, draw=blue!70!black, thick},
+        evalonly/.style={box, draw=orange!85!black, thick},
+        flow/.style={->, thick, black!75},
+        trainflow/.style={->, thick, dashed, blue!70!black},
+        evalflow/.style={->, thick, densely dotted, orange!85!black},
+        lab/.style={font=\scriptsize, fill=white, inner sep=1pt}]
+      \node[fixed] (video) at (1.3,0) {Indexed video};
+      \node[fixed] (clips) at (4.3,0) {16-frame clips\\(about 15\,FPS)};
+      \node[fixed] (enc)   at (7.3,0) {VideoMAE-Base\\+ LoRA ($r{=}8$)};
+      \node[fixed] (store) at (10.3,0) {Clip features\\$\vect{x}\in\mathbb{R}^{768}$};
+      \node[fixed] (proto) at (13.3,0) {100 normal\\prototypes};
+      \node[box, dashed, text width=34mm, minimum height=7mm] (tmp) at (10.8,1.35) {14-class head (Stage~1b only)};
+      \draw[flow] (video) -- (clips); \draw[flow] (clips) -- (enc);
+      \draw[flow] (enc) -- (store); \draw[flow] (store) -- (proto);
+      \draw[dashed, black!60] (tmp.west) -| (enc.north);
+      \node[box] (bag)  at (1.3,-3.0) {Bag of clips\\$[\vect{x}\parallel s]\in\mathbb{R}^{769}$};
+      \node[train] (att)  at (4.3,-3.0) {Shared\\attention};
+      \node[train] (pool) at (7.3,-2.3) {Attention pool};
+      \node[train] (topk) at (7.3,-3.7) {Top-quarter\\max and mean};
+      \node[train] (bin)  at (10.3,-2.3) {Binary head\\(cross-entropy)};
+      \node[train] (resp) at (10.3,-3.7) {Response head\\(3 sigmoids, ASL)};
+      \node[evalonly] (gate) at (13.3,-3.0) {Binary gate};
+      \node[evalonly] (cad)  at (13.3,-4.8) {CAD-style record};
+      \node[evalonly] (time) at (4.3,-4.8) {Temporal intervals};
+      \draw[flow] (store.south) -- ++(0,-0.45) -| node[lab, pos=0.3]{features $\vect{x}$} ([xshift=-4mm]bag.north);
+      \draw[flow] (proto.south) -- ++(0,-0.85) -| node[lab, pos=0.15]{distance $s$} ([xshift=4mm]bag.north);
+      \draw[trainflow] (proto.east) -- ++(0.3,0) |- (1.3,-5.75) node[lab, pos=0.75]{$s$ guides training-bag sampling} -- (bag.south);
+      \draw[flow] (bag) -- (att);
+      \draw[flow] (att) -- (pool.west); \draw[flow] (att) -- (topk.west);
+      \draw[flow] (pool) -- (topk);
+      \draw[flow] (pool) -- (bin); \draw[flow] (topk) -- (resp);
+      \draw[evalflow] (bin.east) -- (gate); \draw[evalflow] (resp.east) -- (gate);
+      \draw[evalflow] (gate) -- (cad); \draw[evalflow] (att) -- (time);
+      \node[anchor=west, font=\scriptsize] at (0.1,-6.4) {%
+        \tikz\node[fill=black!8, draw, minimum height=2.5mm, minimum width=4mm, inner sep=0pt]{}; fixed after Stage~1b\qquad
+        \tikz\node[draw=blue!70!black, thick, minimum height=2.5mm, minimum width=4mm, inner sep=0pt]{}; trained in Stage-2 (three seeds)\qquad
+        \tikz\node[draw=orange!85!black, thick, minimum height=2.5mm, minimum width=4mm, inner sep=0pt]{}; evaluation only\qquad
+        \tikz\draw[->, thick, dashed, blue!70!black](0,0)--(5mm,0); training only};
+    \end{tikzpicture}
+    \caption[Implemented offline pipeline.]{Implemented offline pipeline. Top row: features computed once with the LoRA-adapted VideoMAE encoder, and the normal-prototype distance $s$. Bottom row: the Stage-2 MIL model, whose two heads share one attention scorer. The distance enters every instance and also guides training-bag sampling. The binary gate and the temporal intervals are applied only at evaluation.}
+    \label{fig:method-overview}
+\end{figure}
+
+\begin{figure}[tbp]
+    \centering
+    \footnotesize
+    \begin{tikzpicture}[
+        >={Stealth[length=2mm]},
+        box/.style={draw, rounded corners=1pt, align=center, font=\footnotesize,
+                    text width=33mm, minimum height=11mm, inner sep=2pt},
+        trainbox/.style={box, draw=blue!70!black, thick},
+        valbox/.style={box, draw=green!45!black, thick},
+        testbox/.style={box, draw=orange!85!black, thick},
+        flow/.style={->, thick, black!75}]
+      \node[font=\footnotesize\bfseries, anchor=west] at (0,1.0) {Training and selection};
+      \node[trainbox] (tr)  at (1.7,0)  {Training split\\(1,449 videos)};
+      \node[trainbox] (s2)  at (5.4,0)  {Stage-2 training\\(3 seeds)};
+      \node[valbox]   (sel) at (9.1,0)  {Checkpoint selection\\on validation (161)};
+      \node[box, fill=black!8] (ck) at (12.8,0) {Three fixed\\checkpoints};
+      \node[valbox]   (abl) at (9.1,-1.75) {Two validation-only\\studies (12 + 6 runs),\\no test data};
+      \draw[flow] (tr) -- (s2); \draw[flow] (s2) -- (sel); \draw[flow] (sel) -- (ck);
+      \draw[flow, dashed] (s2.south) |- (abl.west);
+      \draw[flow] (ck.south) -- (12.8,-2.55) -- (0.4,-2.55) -- (0.4,-5.5) -- (2.05,-5.5);
+      \node[font=\footnotesize\bfseries, anchor=west] at (0.7,-3.0) {Test evaluation (290 videos)};
+      \node[testbox] (fb)  at (3.7,-4.0) {Fixed-bag path\\(16 clips per video)};
+      \node[testbox] (dn)  at (3.7,-5.5) {Dense indexed path\\(all 69,090 clips)};
+      \node[testbox] (fbm) at (8.5,-4.0) {Binary and\\response metrics};
+      \node[testbox] (dnm) at (8.5,-5.5) {Response and\\temporal metrics};
+      \node[box] (ex) at (12.8,-5.5) {CAD-style\\examples};
+      \draw[flow] (0.4,-4.0) -- (fb.west);
+      \draw[flow] (fb) -- (fbm); \draw[flow] (dn) -- (dnm); \draw[flow] (dnm) -- (ex);
+      \node[box, fill=black!8, text width=50mm, minimum height=8mm, font=\scriptsize] at (2.75,-7.0) {Historical 14-class outputs:\\development history, not compared};
+      \node[font=\scriptsize, align=left, text width=80mm, anchor=west] at (5.7,-7.0) {The test split had been inspected during earlier development. Test results did not select checkpoints, rules, or thresholds (Section~\ref{sec:method-limits}).};
+    \end{tikzpicture}
+    \caption[Training, selection, and evaluation protocol.]{Training, selection, and evaluation protocol. Validation selects one checkpoint per seed and hosts the prototype-distance and normal-bag studies, which never load test data. The three fixed checkpoints are then evaluated on the test split through two input paths with separate metrics.}
+    \label{fig:protocol-overview}
+\end{figure}
+
+\section{Task Formulation and Supervision}
+\label{sec:task-formulation}
+
+UCF-Crime contains long surveillance videos labeled as Normal or as one of 13 anomaly categories, and it provides temporal annotations for the anomalous test videos \cite{sultani2018real}. Let video $V_j$ have category $g_j$, binary target $y_j^{\mathrm{bin}}\in\{0,1\}$, and $M_j$ candidate clips. Training uses the video-level identity and category. Temporal intervals are reserved for final localization evaluation and are never used as Stage-2 training targets.
+
+This setting is naturally expressed through MIL: a video is a bag and its clips are instances \cite{dietterich1997solving,carbonneau2018multiple}. The available label describes the bag, while the anomalous instance locations are unknown during training. In this project, weak supervision has two distinct uses. During VideoMAE adaptation, every sampled clip inherits its video's 14-category label and receives a distance-derived loss multiplier. During Stage-2 training, a fixed-size bag receives one binary target and one multi-label response vector. The inherited clip category used in the adaptation stage is an approximation, not a clip-level annotation.
+
+The final response target is
+\begin{equation}
+    \vect{y}^{\mathrm{resp}}_j
+    = [y_{j,\mathrm{police}},y_{j,\mathrm{medical}},y_{j,\mathrm{fire}}]
+    \in\{0,1\}^{3}.
+\end{equation}
+Unlike a 14-way softmax label, this vector permits multiple simultaneous positive channels, following the general multi-label formulation \cite{boutell2004learning,tsoumakas2007multi}. The vector replaced the 14-class output of an earlier pipeline version, whose retained results are summarized in Section~\ref{sec:results-historical}. In the project mapping, seven of the 13 anomaly categories activate two or three channels, a structure that one exclusive label cannot represent. Table~\ref{tab:response-map} gives the exact project mapping. Normal maps to $[0,0,0]$. The mapping was not elicited from dispatch professionals and must not be interpreted as clinical, legal, MPDS (Medical Priority Dispatch System), or NFPA (National Fire Protection Association) validation.
+
+\begin{table}[tbp]
+    \centering
+    \small
+    \caption[Project-defined response mapping.]{Deterministic, project-defined response mapping in the channel order Police, Medical, Fire. The vectors are proxy labels derived from dataset categories rather than observed service assignments.}
+    \label{tab:response-map}
+    \begin{tabular}{@{}lccc@{}}
+        \toprule
+        \textbf{UCF-Crime category} & \textbf{Police} & \textbf{Medical} & \textbf{Fire} \\
+        \midrule
+        Normal        & 0 & 0 & 0 \\
+        Abuse         & 1 & 1 & 0 \\
+        Arrest        & 1 & 0 & 0 \\
+        Arson         & 1 & 0 & 1 \\
+        Assault       & 1 & 1 & 0 \\
+        Burglary      & 1 & 0 & 0 \\
+        Explosion     & 0 & 1 & 1 \\
+        Fighting      & 1 & 1 & 0 \\
+        RoadAccidents & 1 & 1 & 1 \\
+        Robbery       & 1 & 0 & 0 \\
+        Shooting      & 1 & 1 & 0 \\
+        Shoplifting   & 1 & 0 & 0 \\
+        Stealing      & 1 & 0 & 0 \\
+        Vandalism     & 1 & 0 & 0 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Dataset Partition and Deterministic Clip Index}
+\label{sec:data-protocol}
+
+The original UCF-Crime test list is retained. The official training list is divided by top-level category into training and validation subsets with a ratio of 0.10 and seed 42. Each eligible group contributes at least one validation video while retaining at least one training video. The resulting fixed split contains 1,449 training videos (720 normal and 729 anomalous), 161 validation videos (80 normal and 81 anomalous), and 290 test videos (150 normal and 140 anomalous). The exact split identities, rather than these counts alone, define the dataset partition; Appendix~\ref{app:artifact-identities} records their SHA-256 hashes.
+
+Stage 0 reads source metadata and constructs a clip index. The configuration requests a target rate $f_t=15$ frames per second (FPS), a clip length $L=16$ sampled frames, stride $S=8$ sampled frames, and spatial size $224\times224$. It does not interpolate every source to exactly 15 FPS. For a source rate $f_j$, the integer decimation factor is
+\begin{equation}
+    n_j=\max\!\left(1,\operatorname{round}\!\left(\frac{f_j}{15}\right)\right),
+\end{equation}
+so the effective sampled rate is $f_j/n_j$. Invalid source-rate metadata falls back to 30 FPS. Candidate starts are
+\begin{equation}
+    \mathcal{S}_j=\{0,S,2S,\ldots\}
+\end{equation}
+subject to the requirement that all $L$ sampled frames exist. The resulting metadata index contains 644,810 training, 143,973 validation, and 69,090 test candidates. These are candidate counts, not a claim that all 857,873 candidates were stored as embeddings in the standard feature store.
+
+For a candidate start $s$ on the sampled timeline, the decoder requests source frames $(s+t)n_j$ for $t=0,\ldots,L-1$. Frames are decoded in RGB order, scaled to $[0,1]$, resized so that the shorter side is 224 pixels, and center-cropped to $224\times224$. The data loader returns each clip as $[3,16,224,224]$, so the encoder wrapper receives batches with shape $[B,3,16,224,224]$. After applying the VideoMAE processor mean and standard deviation, the wrapper permutes this tensor to the Hugging Face \texttt{pixel\_values} convention $[B,16,3,224,224]$.
+
+Temporal evaluation uses source-frame rather than nominal 15-FPS geometry. If $N_j$ is the verified source-frame count, the support of a clip beginning at $s$ is the zero-based half-open interval
+\begin{equation}
+    I_j(s)=\left[s n_j,\ \min\!\left((s+L)n_j,N_j\right)\right).
+    \label{eq:clip-support}
+\end{equation}
+Source-frame boundary $q$ corresponds to $q/f_j$ seconds. Equation~\ref{eq:clip-support} is used consistently for coverage, frame-score projection, interval overlap, and displayed timestamps.
+
+\section{VideoMAE Representation and Low-Rank Adaptation}
+\label{sec:videomae-lora}
+
+\subsection{Clip Encoder}
+
+The encoder is \code{MCG-NJU/videomae-base}, a masked-autoencoder video representation model \cite{tong2022videomae}. Its local configuration uses spatial patches of $16\times16$, temporal tubelets of length 2, hidden size $D=768$, 12 encoder layers, 12 attention heads, and a 3,072-dimensional feed-forward layer. A 16-frame $224\times224$ input therefore yields
+\begin{equation}
+    N_{\mathrm{tok}}
+    =\frac{16}{2}\frac{224}{16}\frac{224}{16}
+    =1{,}568
+\end{equation}
+spatio-temporal tokens. The implementation averages the final hidden states,
+\begin{equation}
+    \vect{x}_{j,i}
+    =\frac{1}{N_{\mathrm{tok}}}\sum_{q=1}^{N_{\mathrm{tok}}}\vect{z}_{j,i,q}
+    \in\mathbb{R}^{768},
+    \label{eq:global-embedding}
+\end{equation}
+and stores only this global clip embedding. Patch-token memories are not part of the final response-routing pipeline.
+
+\subsection{Low-Rank Adapters}
+
+Low-rank adaptation (LoRA) freezes a pretrained weight and represents its trainable update with a low-rank factorization \cite{hu2021lora}. For an activation $\vect{u}$ and frozen projection $W_0$, the implemented update is
+\begin{equation}
+    W'\vect{u}=W_0\vect{u}+\frac{\alpha}{r}BA\vect{u},
+    \qquad
+    A\in\mathbb{R}^{r\times d_{\mathrm{in}}},\quad
+    B\in\mathbb{R}^{d_{\mathrm{out}}\times r}.
+    \label{eq:lora}
+\end{equation}
+Adapters target the query and value projections in all 12 transformer layers. The configuration uses rank $r=8$, $\alpha=16$, scale $\alpha/r=2$, adapter dropout 0.05, and no trainable bias. The base encoder weights remain frozen. The 24 adapted $768\times768$ projections contribute 294,912 trainable adapter parameters. A temporary 14-class linear classifier contributes a further 10,766 parameters, for 305,678 trainable parameters during Stage 1b. That classifier is discarded after adapter selection.
+
+\subsection{Weak Clip-Level Adaptation}
+
+Each adaptation epoch requests at most eight clips per training video. Normal videos are sampled uniformly. For anomalous videos, four clips are sampled from the highest-scoring half of the available candidates and four from the remaining set. The score used at this stage was an earlier prototype distance computed on frozen, non-adapted features, available before adapted-feature extraction; it is distinct from the later LoRA-feature normal memory used by Stage-2 training. Every chosen clip inherits the video category $g_j$.
+
+Let $\vect{r}_{j,i}\in\mathbb{R}^{14}$ denote the temporary classifier logits, let $w_{g_j}$ be the inverse-frequency class weight normalized to unit mean, and let $s^{(0)}_{j,i}$ be this earlier frozen-feature distance. The per-clip multiplier is
+\begin{equation}
+    q_{j,i}=
+    \begin{cases}
+        1, & g_j=\text{Normal},\\
+        \min\!\left(5,\max\!\left(0.1,2s^{(0)}_{j,i}\right)\right), & \text{otherwise}.
+    \end{cases}
+\end{equation}
+For a clip mini-batch $\mathcal{C}$, the objective is
+\begin{equation}
+    \mathcal{L}_{\mathrm{adapt}}
+    =-\frac{1}{|\mathcal{C}|}
+      \sum_{(j,i)\in\mathcal{C}}
+      q_{j,i}w_{g_j}
+      \log\frac{\exp(r_{j,i,g_j})}
+      {\sum_{c=1}^{14}\exp(r_{j,i,c})}.
+    \label{eq:adapt-loss}
+\end{equation}
+This distance affects sampling and loss weighting; it does not convert the inherited video category into a ground-truth clip label.
+
+Stage 1b uses seed 1337 and runs for eight epochs. AdamW \cite{loshchilov2018decoupled} uses learning rate $10^{-4}$ and weight decay $10^{-2}$. Training uses fp16 autocast, gradient checkpointing, clip mini-batches of two, gradient accumulation across four videos, and gradient-norm clipping at 1.0. A one-cycle schedule \cite{smith2019super} starts at one tenth of the maximum learning rate, uses a 10\% warm-up fraction, and then applies cosine annealing. Checkpoints are compared by sampled clip-level validation accuracy on at most 50 validation videos. The preserved best adapter is epoch 6. This selection criterion concerns the temporary inherited-label approximation, not final response-routing performance.
+
+\subsection{Frozen Adapted Feature Stores and Loader Compatibility}
+
+After selection, the adapted encoder is placed in evaluation mode and its global embeddings are stored as \code{float16}. The standard store caps each training video at 64 clips and each validation or test video at 128 clips. It contains 85,486 training, 17,117 validation, and 27,516 test embeddings. Later prototype construction and Stage-2 training are conditional on this immutable sparse store. The sampling implementation used Python's process-dependent \code{hash()} value; the interpreter's startup hash seed was not captured. Consequently, the existing store identities are reproducibility authorities, while exact regeneration of the sparse subset from configuration alone is not guaranteed.
+
+The final temporal evaluation uses a separate immutable dense test store containing all 69,090 predeclared test candidates. This store does not replace the sparse fixed-bag evidence. It changes only the evaluation input coverage and is used for the indexed-system and temporal protocols in Sections~\ref{sec:evaluation-paths} and~\ref{sec:temporal-evaluation}.
+
+The current software stack introduces a second representation constraint: Transformers 5.12.0 ignores legacy cached VideoMAE \code{q\_bias}/\code{v\_bias} keys and leaves 36 newly represented linear biases at zero, and this loader was retained because it reproduces the stored validation representation within the frozen tolerance, whereas restoring the published bias tensors did not. Appendix~\ref{app:repro-limits} gives the exact reproduction check and the resulting reproducibility boundary.
+
+\section{Normal Prototype Memory and Distance Signal}
+\label{sec:prototype-teacher}
+
+Prototype memories have been used in weakly supervised video anomaly detection to summarize normal and anomalous feature structure \cite{zhou2023ur}. The implementation here makes a narrower project-specific choice: it builds only a normal reference memory from the frozen adapted feature store. All 42,253 stored embeddings from the 720 normal training videos are converted to \code{float32} and L2-normalized,
+\begin{equation}
+    \widetilde{\vect{x}}_n
+    =\frac{\vect{x}_n}{\max(\lVert\vect{x}_n\rVert_2,10^{-12})}.
+\end{equation}
+CPU K-means \cite{lloyd1982least} selects 100 input vectors with seed 1337 as initial centers and runs for at most 25 iterations. Empty clusters are re-seeded from input vectors. The final centers are L2-normalized and persisted as a \code{float16} tensor $C\in\mathbb{R}^{100\times768}$.
+
+For a clip embedding $\vect{x}_{j,i}$, the distance signal is
+\begin{equation}
+    s_{j,i}
+    =\min_{k\in\{1,\ldots,100\}}
+      \left\lVert\widetilde{\vect{x}}_{j,i}-\vect{c}_k\right\rVert_2^2.
+    \label{eq:teacher-distance}
+\end{equation}
+For exactly unit-normalized vectors, the squared Euclidean distance equals $2-2\cos\theta$ and lies in $[0,4]$. The final evaluator L2-normalizes each stored feature in \code{float32}, casts the persisted prototypes to \code{float32}, and applies Equation~\ref{eq:teacher-distance} without score scaling, clipping, calibration, prototype refitting, or row renormalization. The original \code{float32} centers are unavailable. The persisted \code{float16} rows therefore approximate the training-time centers; validation-score replay differs from the saved scores by at most $6.91414\times10^{-5}$, below the frozen $10^{-3}$ compatibility tolerance.
+
+The scalar has two roles in Stage-2 training. First, it guides training-bag sampling. Second, it is concatenated with the original, unnormalized clip embedding:
+\begin{equation}
+    \vect{h}_{j,i}
+    =[\vect{x}_{j,i}\parallel s_{j,i}]
+    \in\mathbb{R}^{769}.
+    \label{eq:augmented-instance}
+\end{equation}
+The model is free to learn how to use this value. The construction does not impose a calibrated probability interpretation or require the learned attention weights to be monotonic in distance.
+
+\section{Stage-2 Attention MIL Model}
+\label{sec:stage2-model}
+
+\subsection{Training-Bag Construction}
+
+Every Stage-2 training bag has $M=16$ instances. During epochs 0 and 1, the sampler draws uniformly. From epoch 2 onward, it draws eight uniform references and eight high-score references. For a video with $M'_j$ stored candidates, the high-score pool size is
+\begin{equation}
+    P_j=\min\!\left(M'_j,\max\!\left(16,\left\lceil0.25M'_j\right\rceil\right)\right).
+\end{equation}
+Already selected uniform references are removed before sampling from this pool. If fewer than 16 references are available, the final selected reference is repeated until the bag has the required size. These repeated positions are treated as valid. A SHA-256-derived seed based on the training seed, epoch, context, and video identity makes Stage-2 sampling independent of the Python process hash.
+
+The memory-guided policy is an implementation-specific sampling rule. It is not presented as a standard algorithm from the literature. Its controlled evaluation is the validation-only $2\times2$ design in Section~\ref{sec:ablation-protocol}, which separates score concatenation from guided sampling.
+
+\subsection{Shared Attention and Binary Head}
+
+Attention-based MIL learns a permutation-invariant weighted bag representation from bag labels \cite{ilse2018attention}. For a padded input matrix $H_j\in\mathbb{R}^{M\times769}$ and validity mask $m_{j,i}$, the implemented scorer is
+\begin{align}
+    \vect{u}_{j,i} &= \tanh(W_a\vect{h}_{j,i}+\vect{b}_a),
+        &W_a&\in\mathbb{R}^{256\times769},\\
+    e_{j,i} &= \vect{w}_a^{\mathsf{T}}\vect{u}_{j,i}+b_a',\\
+    a_{j,i} &=
+    \frac{m_{j,i}\exp(e_{j,i})}
+    {\sum_{q=1}^{M}m_{j,q}\exp(e_{j,q})}.
+    \label{eq:attention}
+\end{align}
+Invalid positions are assigned negative infinity before the softmax. This is the non-gated tanh scorer, not the sigmoid-gated $U/V/w$ architecture. The binary pooled representation is
+\begin{equation}
+    \vect{z}^{\mathrm{bin}}_j
+    =\sum_{i=1}^{M}a_{j,i}\vect{h}_{j,i}
+    \in\mathbb{R}^{769}.
+\end{equation}
+Dropout with probability 0.1 is applied during training, followed by a linear layer that produces two logits $\vect{\ell}^{\mathrm{bin}}_j\in\mathbb{R}^{2}$ for Normal and Anomaly.
+
+\subsection{Top-Attention Multi-Pooling and Response Head}
+
+The response branch ranks instances by the shared attention weights and retains
+\begin{equation}
+    K_j=\max\!\left(1,\left\lfloor0.25M_j\right\rfloor\right)
+\end{equation}
+instances. For a 16-instance bag, $K_j=4$. Let $\mathcal{T}_j$ contain these indices. The branch computes element-wise maximum and mean representations,
+\begin{align}
+    \vect{z}^{\max}_j&=\max_{i\in\mathcal{T}_j}\vect{h}_{j,i},\\
+    \vect{z}^{\mathrm{mean}}_j&=\frac{1}{K_j}\sum_{i\in\mathcal{T}_j}\vect{h}_{j,i},
+\end{align}
+and concatenates them with the binary attention pool:
+\begin{equation}
+    \vect{z}^{\mathrm{resp}}_j
+    =[\vect{z}^{\mathrm{bin}}_j\parallel
+      \vect{z}^{\max}_j\parallel
+      \vect{z}^{\mathrm{mean}}_j]
+    \in\mathbb{R}^{2{,}307}.
+\end{equation}
+After dropout, one linear layer produces three logits $\vect{\ell}^{\mathrm{resp}}_j\in\mathbb{R}^{3}$. Independent sigmoid transformations permit non-exclusive channel predictions. The binary gate is not multiplied into these logits during training; it is applied only when constructing gated evaluation views and CAD-style output.
+
+\section{Training Objectives and Model Selection}
+\label{sec:optimization}
+
+The binary loss is two-class cross-entropy with inverse-frequency weights computed from the 720 normal and 729 anomalous training videos and normalized to unit mean; because the classes are almost balanced, the weights are about 1.006 and 0.994 and have little effect:
+\begin{equation}
+    \mathcal{L}_{\mathrm{bin},j}
+    =-w_{y_j^{\mathrm{bin}}}
+      \log\operatorname{softmax}(\vect{\ell}^{\mathrm{bin}}_j)_{y_j^{\mathrm{bin}}}.
+\end{equation}
+
+The response branch uses Asymmetric Loss, a multi-label objective that down-weights easy negative targets \cite{ridnik2021asymmetric}. Let $p_{j,c}=\sigma(\ell^{\mathrm{resp}}_{j,c})$ and define the shifted negative probability $\bar{p}_{j,c}=\min(1,1-p_{j,c}+m)$ with $m=0.05$. For anomalous videos,
+\begin{equation}
+\begin{split}
+    \mathcal{L}_{\mathrm{resp},j}
+    =-\frac{1}{3}\sum_{c=1}^{3}\Big[
+       &y_{j,c}(1-p_{j,c})^{\gamma_+}\log p_{j,c}\\
+       &+(1-y_{j,c})(1-\bar{p}_{j,c})^{\gamma_-}
+       \log\bar{p}_{j,c}\Big],
+\end{split}
+\end{equation}
+where $\gamma_+=0$ and $\gamma_-=6$. The response loss is evaluated only on anomalous bags; it is zero for an all-normal mini-batch. The total objective is
+\begin{equation}
+    \mathcal{L}_{\mathrm{Stage\text{-}2}}
+    =\mathcal{L}_{\mathrm{bin}}+\mathcal{L}_{\mathrm{resp}}.
+\end{equation}
+
+Stage-2 training uses AdamW with learning rate $10^{-4}$, weight decay $10^{-4}$, batches of eight videos, gradient-norm clipping at 1.0, and a maximum of 100 epochs. The three official training seeds are 1337, 2027, and 3407. All runs use the same immutable 161-video validation-bag manifest, evaluation seed 1337, and response threshold 0.5. This threshold is the default decision point of a sigmoid output and was not tuned. Checkpoint selection maximizes validation response Macro-F1 with minimum improvement $10^{-4}$ and patience 15. The selected epochs are 34, 0, and 25, and the runs stopped after 50, 16, and 41 epochs. The seed-2027 model is therefore its epoch-0 checkpoint: it was saved before guided sampling begins in epoch 2, and none of the 15 epochs that followed improved on it.
+
+Response Macro-F1 is the only selection criterion. The binary results in Chapter~\ref{chap:results} therefore belong to checkpoints chosen for their response output, not for binary discrimination. The selected validation values lie close to an all-services reference (Section~\ref{sec:results-fixed-binary}), so differences between the seeds, including their selected epochs, are not read as properties of the trained models. Test scores, temporal annotations, and the validation-only ablation results did not select these checkpoints, and the three models are evaluated separately rather than ensembled.
+
+\section{Validation-Only Prototype-Distance Study}
+\label{sec:ablation-protocol}
+
+The mechanism study is a $2\times2$ factorial design over score input and guided sampling. Table~\ref{tab:ablation-design} defines the four variants. Each variant is trained with seeds 1337, 2027, and 3407. All other architecture, optimizer, early-stopping, loss, feature-store, prototype-distance, split, and fixed validation-bag settings are held constant.
+
+\begin{table}[tbp]
+    \centering
+    \caption[Prototype-distance study design.]{Validation-only prototype-distance study. The study isolates score concatenation and score-guided sampling without evaluating these runs on test data.}
+    \label{tab:ablation-design}
+    \begin{tabular}{@{}lccc@{}}
+        \toprule
+        \textbf{Variant} & \textbf{Score input} & \textbf{Input dimension} & \textbf{Sampling after warm-up} \\
+        \midrule
+        Full     & Yes & 769 & 8 uniform + 8 high-score \\
+        No input & No  & 768 & 8 uniform + 8 high-score \\
+        Uniform  & Yes & 769 & 16 uniform \\
+        Neither  & No  & 768 & 16 uniform \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+For each seed, Full and No input share a byte-identical 100-epoch guided bag plan; Uniform and Neither share a byte-identical uniform plan. A dedicated data-loader generator also fixes video order within each seed. Each run selects a checkpoint on the fixed validation set and is evaluated once on that same validation population. The test split, test feature identity, test prototype-distance tensor, and test bag manifest are not loaded by these runs. Consequently, the study supplies descriptive validation-only mechanism evidence. It is not an estimate of final test generalization and does not by itself establish a causal benefit from either mechanism.
+
+\section{Post-Hoc Normal-Bag Response-Loss Study}
+\label{sec:normal-bag-study}
+
+Section~\ref{sec:optimization} restricts the response loss to anomalous bags,
+so the response head never receives an all-zero target. At the same time,
+703 of the 729 anomalous training bags carry a positive Police label. Under
+these two conditions, a head that activates Police for every input incurs
+little loss on that channel. This section describes a controlled,
+validation-only test of whether adding normal bags to the response loss
+changes this behavior. The study was executed after the frozen protocol and
+is reported separately. It does not alter, re-select, or re-evaluate any
+officially reported checkpoint, and it does not read the test split.
+
+Two variants extend the response loss of Section~\ref{sec:optimization} to
+normal bags, toward their all-zero target. Let $y_j^{\mathrm{bin}}$ denote the
+binary target and $\mathcal{L}_{\mathrm{ASL}}$ the same Asymmetric Loss used
+there, both unchanged.
+
+\textbf{Unweighted.} The response loss is a single mean of
+$\mathcal{L}_{\mathrm{ASL}}$ over every bag in the mini-batch, regardless of
+$y_j^{\mathrm{bin}}$, with normal bags targeting $[0,0,0]$. Because
+mini-batches are approximately balanced between normal and anomalous bags,
+this halves the effective gradient weight of each anomalous bag relative to
+the original anomalous-only objective.
+
+\textbf{Weighted.} The response loss is instead the sum of two
+separately averaged terms,
+\begin{equation}
+    \mathcal{L}_{\mathrm{resp}}
+    = \underbrace{\frac{1}{|\mathcal{A}|}\sum_{j\in\mathcal{A}}\mathcal{L}_{\mathrm{ASL},j}}_{\text{anomalous bags, full weight}}
+    + \lambda\underbrace{\frac{1}{|\mathcal{N}|}\sum_{j\in\mathcal{N}}\mathcal{L}_{\mathrm{ASL},j}}_{\text{normal bags}},
+    \label{eq:reweighted-resp-loss}
+\end{equation}
+where $\mathcal{A}$ and $\mathcal{N}$ are the anomalous and normal bags in the
+mini-batch. The anomalous term is therefore identical in form and strength to
+the original objective; the normal-bag term is an additional, independently
+scaled correction. $\lambda=0.3$ was fixed before training and not tuned
+against any result: a moderate value intended to retain a corrective signal
+against false Police activation without letting it compete on equal terms
+with the anomalous-specific signal.
+
+Both variants otherwise share the exact architecture, optimizer, early
+stopping, seeds (1337, 2027, 3407), and training-bag-plan identity of the
+matched control, the Full arm of the
+prototype-distance study (Section~\ref{sec:ablation-protocol}). All three arms
+are evaluated only on the fixed 161-video validation set; none was evaluated
+on the test split, and none of these checkpoints is an official model. The
+per-seed validation values, checkpoint, configuration, and evaluation-output
+identities are recorded with the other artifact identities
+(Appendix~\ref{app:artifact-identities}).
+
+\section{Fixed-Bag and Dense Indexed Evaluation}
+\label{sec:evaluation-paths}
+
+Two evaluation paths answer different questions and must remain separate. The \emph{fixed-bag} path evaluates every official checkpoint on one immutable, uniformly sampled 16-instance bag for each validation or test video. The common evaluation seed is 1337. The fixed test manifest contains 290 bags drawn from the sparse 27,516-embedding test store. This path supports like-for-like comparison across Stage-2 training seeds under identical model inputs.
+
+The \emph{dense indexed} path evaluates the same checkpoints on every verified test candidate. It retrieves clips by exact video identity, orders them by $(\text{clip start},\text{clip key})$, and forms one variable-length bag per video. Across all 290 videos, these bags contain 69,090 embeddings. No candidate is resampled, truncated, padded, or replaced by a fixed bag. Embeddings and prototype distances are cast to \code{float32}; MIL inference uses evaluation mode without autocast. The top-quarter response pool is recomputed from the current bag length. This path supports system-level routing and temporal evaluation under near-complete indexed coverage, but it does not make its metrics interchangeable with fixed-bag results.
+
+For both paths, the binary prediction is the argmax of the two binary logits; an exact tie maps to Normal. Each response probability is thresholded independently at 0.5. The following views are computed for each checkpoint:
+
+\begin{description}
+    \item[Raw routing] the ungated response vector on all 290 test videos. Here, \emph{raw} means ungated model output, not direct inference from an unprocessed video stream.
+    \item[Anomaly-conditional routing] the same raw response predictions restricted by ground truth to the 140 anomalous test videos. This oracle population measures response assignment after anomaly membership is known; it is not an operational gate.
+    \item[Binary-gated routing] the response vector on all 290 videos after setting all channels to zero whenever the binary branch predicts Normal.
+\end{description}
+
+Two trivial references use matched populations: predicting $[1,1,1]$ for every video, and predicting $[1,1,1]$ only when the same checkpoint's binary decision is anomalous. The second reference isolates what the binary gate achieves without learned service selection.
+
+For response channel $c$, precision, recall, and F1 are computed from $\mathrm{TP}_c$, $\mathrm{FP}_c$, and $\mathrm{FN}_c$ in the usual way. Undefined denominators map to zero and support counts remain visible. Response Macro-F1 is the unweighted mean of the three channel F1 scores. Hamming loss is the fraction of incorrect channel decisions across $3N$ binary labels, and exact match is the fraction of videos for which the complete three-bit vector is correct. The binary branch is summarized with AUROC, positive-class precision, recall, F1, accuracy, and its confusion counts. AUROC is computed from the softmax probability of the Anomaly class, one score per video. Threshold-independent scores and thresholded decisions are kept distinct. For the fixed-bag AUROC, the fixed-bag gated Macro-F1 margin over binary-gated all-services, and the dense temporal AP gap to the whole-video reference, a paired video bootstrap adds a 95\% percentile interval: the test videos are resampled with replacement 10,000 times (random seed 0), the same resample is applied to all three checkpoints and to the reference, and the statistic is the mean over the three checkpoints. The interval describes test-sampling uncertainty only; training variance is reported separately as the sample SD.
+
+All official Stage-2 variability is descriptive. Metrics are computed within each checkpoint first, then summarized across the three training seeds as
+\begin{equation}
+    \bar{x}=\frac{1}{3}\sum_{r=1}^{3}x_r,
+    \qquad
+    s=\sqrt{\frac{1}{2}\sum_{r=1}^{3}(x_r-\bar{x})^2}.
+\end{equation}
+The 870 checkpoint--video rows are not treated as independent observations. No confidence interval or significance test is inferred from $n=3$.
+
+\section{Temporal Grounding Protocol}
+\label{sec:temporal-evaluation}
+
+\subsection{Annotation Convention and Eligible Population}
+
+The final protocol freezes a one-based, endpoint-inclusive interpretation of positive annotation pairs $[a,b]$ and converts them to zero-based half-open intervals $[a-1,b)$. This interpretation is consistent with the dataset authors' MATLAB evaluator, but explicit conversion provenance for the released text coordinates was not established. Ground-truth intervals are therefore treated as a declared protocol convention rather than a fully proven property of the text release.
+
+Five anomalous test annotations end one or two frames beyond source lengths verified by full decoding. The affected videos are \code{Arson011}, \code{Arson016}, \code{Explosion033}, \code{Fighting003}, and \code{Shooting015} in their respective category directories. Their ground truth is not silently clipped. They remain in all 290-video routing evaluations and in the 140-video anomaly-conditional population, but they are excluded from the primary temporal population. Temporal metrics therefore use 135 source-bounded anomalous videos. Normal-video temporal summaries use all 150 normal test videos.
+
+\subsection{Frame Projection, Average Precision, and Top-Clip Hit}
+
+The shared softmax attention weights are evaluated as relative temporal saliency. For each video, a clip score is projected to every frame in its support from Equation~\ref{eq:clip-support}. Overlapping supports use their maximum score. An uncovered frame receives a value strictly below the video's minimum clip score. Given the binary source-frame ground-truth mask, non-interpolated AP is computed at distinct score thresholds. AP is calculated per video and then macro-averaged across the 135 eligible videos. Scores are not pooled across videos because softmax attention depends on bag length.
+
+Top-attended-clip hit tests whether the support of the maximum-attention clip intersects any annotated interval. Exact attention ties are resolved by earliest clip start and then clip key. This indicator is averaged across eligible videos; it is not conditioned on the binary prediction and does not impose a minimum IoU.
+
+Attention is a learned pooling quantity, not a calibrated anomaly probability. Empirical overlap with an annotation supports a localization measurement, but attention alone does not guarantee a faithful explanation of model behavior. The protocol therefore uses the term \emph{temporal grounding} for measured support alignment and avoids causal-explanation claims.
+
+\subsection{Fixed-Rule Intervals and IoU}
+
+For interval metrics, attention is smoothed with a one-dimensional Gaussian filter of $\sigma=2$. Smoothing occurs separately within runs whose adjacent starts differ by exactly the configured stride of 8; a missing candidate breaks a run. The smoothed sequence is min--max normalized once over the complete video. A constant sequence maps to zero. Clips with normalized score at least 0.5 contribute their source support, and the supports are merged without filling gaps between disjoint intervals.
+
+Let $P_j$ be the resulting union and $G_j$ the union of annotated intervals. The fixed-rule intersection over union is
+\begin{equation}
+    \operatorname{IoU}_j
+    =\frac{|P_j\cap G_j|}{|P_j\cup G_j|}.
+\end{equation}
+An empty $P_j$ on an anomalous video has IoU zero. The protocol reports mean and median IoU, the fractions of eligible videos with IoU at least 0.1, 0.3, 0.5, and 0.7, and the exact-zero count and frequency. These are fixed rules; no threshold sweep selects a favorable operating point.
+
+Coverage is reported separately for fixed bags, the sparse store, and the realized dense store. For each video it includes clip and unique-clip counts, the fraction of source frames covered by the union of supports, the largest uncovered gap, and---when ground truth is valid---the fraction of annotated frames covered. This separates localization quality from the ability of a sampling protocol to observe the relevant frames.
+
+\subsection{Frozen Temporal References}
+
+Four checkpoint-independent references use the same eligible videos and geometry. The whole-video reference assigns every source frame score one and predicts the full video interval. The uniform-clips reference assigns every candidate $1/M_j$; because constant sequences normalize to zero, its fixed-rule predicted interval is empty. The random-clips reference draws one deterministic \code{float64} score vector per video from NumPy PCG64. Its seed is the first eight SHA-256 digest bytes of \code{temporal\_system\_v1:<video-id>}, interpreted as an unsigned big-endian integer; the vector is normalized by its sum and reused for every checkpoint. The prototype-distance reference uses the dense nearest-prototype scores directly as temporal saliency. Each reference is one frozen replicate per video, not three independent seeds.
+
+The primary temporal metrics use ungated attention and threshold 0.5. A separate display rule thresholds the smoothed sequence at 0.65 and applies the binary gate before calculating display IoU. These quantities are kept separate so that a binary false negative cannot remove a video from the primary localization population.
+
+\section{Offline CAD-Style Output}
+\label{sec:cad-output}
+
+The CAD-style renderer is a deterministic offline transformation of saved model output. It uses the dense indexed video identity and does not consume a live stream, maintain a rolling online buffer, contact an external service, or transmit an alert. The primary scientific response metrics use threshold 0.5. The display instead uses the fixed channel thresholds
+\begin{equation}
+    \vect{\tau}^{\mathrm{demo}}=[0.65,0.60,0.65]
+\end{equation}
+for Police, Medical, and Fire. These values are presentation constants, not calibrated operating points, and no rationale for them is recorded. They are hard-coded in the local evaluation and rendering scripts, and their first appearance in the repository history, on 27 July 2026, postdates the first test evaluations of the pipeline. The history therefore cannot show that they were set without knowledge of test outcomes. They are used only by the qualitative CAD-style display; none of the metrics reported in Chapter~\ref{chap:results} depends on them.
+
+If the binary decision is Normal, the displayed service set is empty and the priority is \code{CLEAR}. Otherwise, priority is assigned in the following order: Fire produces \code{P1-EMERGENCY}; Medical produces \code{P1-MEDICAL}; Police produces \code{P2-POLICE}; and an anomalous binary decision with no active service produces \code{P3-REVIEW}. Display intervals use the separate 0.65 attention rule described above. An alert may remain triggered even if no display interval exists; in that case the anomaly window and trigger time are null.
+
+The output field \code{alert\_latency\_sec} is the displayed trigger frame divided by source FPS. It measures source-video time from the beginning of the file, not computation latency and not delay from annotated event onset. The interface and priority labels demonstrate a possible representation of offline model output. They provide no evidence of live throughput, external CAD integration, reliability, safety, or deployment readiness.
+
+\section{Evidence Partitions and Methodological Limits}
+\label{sec:method-limits}
+
+The evidence in Chapter~\ref{chap:results} falls into separate tiers: the two test-evaluation paths of Section~\ref{sec:evaluation-paths}, the validation-only ablation of Section~\ref{sec:ablation-protocol}, the post-hoc, validation-only normal-bag study of Section~\ref{sec:normal-bag-study}, and the two retained historical 14-class outputs (Section~\ref{sec:results-historical}). The historical outputs are development history. They cannot support a causal claim about LoRA or a direct comparison with the three-channel task. The test results had already been inspected before this thesis was written, so they are not treated as an untouched test set.
+
+The design constants are documented unevenly. The bag size of 16, the 100 prototype centers, the two uniform warm-up epochs, the equal split between uniform and high-score references, and the 0.25 high-score pool fraction are recorded in the repository before the first test evaluation. The LoRA rank and scaling, the asymmetric-loss exponent $\gamma_-=6$, and the Gaussian smoothing width and threshold of the interval rule come from the earlier development version of the pipeline. An earlier project document records $\gamma_-=4$ before the value was changed to 6, and no search or rationale for either value is documented. These are therefore inherited settings, and the repository history cannot show that they were fixed before the test outcomes were first seen.
+
+The Full arm of the prototype-distance study uses the official configuration but does not reproduce the official checkpoints. The configurations differ only in the validation-only flag and a scope note. However, the Full arm takes its training bags and video order from a pre-generated 100-epoch bag plan, whereas the official runs drew their bags during training. With the same seeds, the selected validation Macro-F1 differed from the official value by $-0.009$, $+0.033$, and $+0.012$. A change in the realized training bags alone therefore moves validation Macro-F1 by up to 0.033, more than most margins reported in Sections~\ref{sec:results-ablation} and~\ref{sec:results-normal-bag}. The two studies therefore compare only arms trained with the same bag-plan procedure, never an arm with the official checkpoints.
+
+Reproducibility depends on local files. Splits, configs, manifests, checkpoints, evaluations, and feature stores are identified by hashes, but the raw UCF-Crime videos, large feature stores, checkpoints, and dense outputs are kept locally and are not in Git, and no external archive exists yet. Appendix~\ref{app:reproducibility} and \path{reproducibility/PROVENANCE.md} record the identities, environments, commands, and remaining gaps.

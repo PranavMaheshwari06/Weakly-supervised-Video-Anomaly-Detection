@@ -1,0 +1,609 @@
+% !TeX root = ../thesis.tex
+\chapter{Background and Related Work}
+\label{chap:background}
+
+This chapter develops the concepts needed to interpret the implemented pipeline
+and its evidence. The organization is thematic: it begins with the supervision
+and task distinctions created by UCF-Crime, then connects MIL, video representation learning, parameter-efficient adaptation,
+prototype guidance, response-label prediction, and temporal grounding. The
+human-oversight and deployment implications these ideas raise are addressed
+together with the evidence in Chapter~\ref{chap:discussion}, where they can be
+grounded in measured failure modes rather than anticipated in the abstract.
+The aim here is not to catalogue every video anomaly method. It is to make
+clear which established ideas the thesis combines, what each idea can support,
+and which conclusions still require direct evaluation.
+
+\section{Video Anomaly Tasks under Weak Supervision}
+\label{sec:background-tasks}
+
+\subsection{UCF-Crime and Long Untrimmed Video}
+
+An anomaly is meaningful only relative to a context and an expected range of
+behavior. Chandola et al. define anomaly detection as finding patterns that do
+not conform to expected behavior, and they describe contextual anomalies, which
+are anomalous in one context but normal in another \cite{chandola2009anomaly}.
+In surveillance video, the same visual action can be routine in one
+location and concerning in another. The learning problem is therefore not a
+closed catalogue of every possible abnormal event. It is a decision problem
+defined by a dataset, its labels, and the operating context represented by its
+cameras. This dependence is especially important when model inputs include
+background, viewpoint, compression, and scene layout as well as the event of
+interest.
+
+UCF-Crime was introduced to move anomaly detection toward long, untrimmed,
+real-world surveillance recordings. The dataset contains 1,900 videos totaling
+approximately 128 hours, with normal videos and 13 anomaly categories such as
+Abuse, Arson, Burglary, RoadAccidents, Robbery, and Shooting
+\cite{sultani2018real}. The authors presented two uses: binary anomaly detection,
+where the anomaly categories form one positive group, and anomalous-activity
+recognition, where the individual categories are distinguished. For the
+anomalous test videos, the authors also provide temporal annotations, the start
+and end frames of each event, obtained by averaging the labels of several
+annotators. These
+facets make the dataset suitable for asking different questions, but they do not
+make the answers interchangeable.
+
+The videos are untrimmed: an anomalous video can begin and end with normal
+activity, and the event may occupy only a small part of its duration. A
+video-level anomaly label therefore states that relevant evidence occurs
+somewhere in the video; it does not state that every sampled clip is anomalous.
+Similarly, attaching the video's category to a sampled clip is a weak training
+approximation rather than a verified clip annotation. This distinction matters
+for both representation adaptation and downstream MIL. Treating inherited clip
+labels as fully observed ground truth would conceal the central uncertainty of
+the task.
+
+Video anomaly detection has been approached with different amounts of
+supervision. One line of work learns from regular video alone; Hasan et al., for
+example, learn a generative model of regular motion patterns with an
+autoencoder \cite{hasan2016learning}. Weakly supervised methods instead train
+on video-level labels of both normal and anomalous videos, as in the ranking
+approach of Sultani et al. discussed in Section~\ref{sec:background-mil}.
+The two settings use different benchmarks (Table~\ref{tab:datasets}). UCSD
+Ped1/Ped2 \cite{mahadevan2010anomaly}, CUHK Avenue \cite{lu2013abnormal}, and
+the ShanghaiTech Campus dataset \cite{liu2018future} were built for the
+normal-only setting. Their anomalies are mostly local deviations such as
+vehicles among pedestrians, running, or loitering. Each video comes from one of a
+few fixed scenes, and the standard training split contains no
+anomalies. Zhong et al.\ later reorganized ShanghaiTech into a weakly
+supervised split of 238 training and 199 test videos \cite{zhong2019graph}, but
+its anomaly types remain unnamed. XD-Violence is larger and weakly labeled, but
+it mixes movies, sports, games, and hand-held recordings with surveillance
+footage and centers on violence with audio \cite{wu2020not}.
+
+UCF-Crime is the only one of these benchmarks that combines four properties
+this thesis needs: real surveillance footage from many scenes, named incident
+categories from which a response mapping can be derived, weak video-level
+labels for training, and frame-level annotations of the anomalous test videos.
+It is also the benchmark on which most of the weakly supervised methods compared
+in Section~\ref{sec:background-comparison} report results.
+
+\begin{table}[!ht]
+    \centering
+    \small
+    \caption[Video anomaly datasets.]{Video anomaly datasets as described by their authors or, for UCSD, Avenue, and ShanghaiTech, by Liu et al.\ \cite{liu2018future}. ``Normal only'' means that the standard training split contains no anomalies.}
+    \label{tab:datasets}
+    \begin{tabularx}{\textwidth}{@{}l l >{\raggedright\arraybackslash}X l@{}}
+        \toprule
+        \textbf{Dataset} & \textbf{Videos (train / test)} & \textbf{Content and anomaly types} & \textbf{Training labels} \\
+        \midrule
+        UCSD Ped1 \cite{mahadevan2010anomaly} & 34 / 36 & Pedestrian scene; 40 events, vehicles such as bicycles and cars & Normal only \\
+        UCSD Ped2 \cite{mahadevan2010anomaly} & 16 / 12 & Pedestrian scene; 12 events, same definition & Normal only \\
+        CUHK Avenue \cite{lu2013abnormal} & 16 / 21 & One scene; 47 events such as throwing, loitering, running & Normal only \\
+        ShanghaiTech \cite{liu2018future} & 330 / 107 & 13 scenes; 130 events of various, uncategorized types & Normal only \\
+        UCF-Crime \cite{sultani2018real} & 1,610 / 290 & Real surveillance, 128\,h; 13 named crime and accident categories & Video level \\
+        XD-Violence \cite{wu2020not} & 3,954 / 800 & Movies, web, and CCTV with audio, 217\,h; 6 violence types & Video level \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+A more recent direction brings in language. VadCLIP adapts a frozen CLIP
+(Contrastive Language--Image Pre-training) model
+with two branches, one for coarse binary classification and one that aligns
+video features with textual category labels \cite{wu2024vadclip}. Anomize
+targets open-vocabulary detection, in which anomaly categories not seen during
+training must still be detected and named \cite{anomize2025cvpr}. UCA annotates
+UCF-Crime with sentence-level event descriptions and their timing to study
+surveillance video-and-language understanding \cite{yuan2024surveillance}, and, in a preprint,
+Holmes-VAD fine-tunes a multimodal large language model to explain the
+anomalies it detects \cite{zhang2024holmes}. In these works, understanding
+means describing or naming an event in language. The pipeline in this thesis
+takes a narrower route. It uses visual features only, produces no free-text
+description, and predicts a fixed vocabulary of three response channels, so its
+use of the term is limited to a video-level anomaly decision, response
+channels, and temporal support. It also runs offline on stored videos, whereas
+Karim et al. train a weakly supervised detector end to end for real-time
+decisions \cite{realtime2024wacv}.
+
+In this thesis, UCF-Crime is consequently both the empirical domain and a scope
+boundary. Its video identities, fixed split, categories, and temporal annotations
+define the reported questions. The dataset does not supply Police, Medical, or
+Fire decisions, and it does not establish generalization to a new camera network
+or institution. For the present work, this means that UCF-Crime supports weakly supervised video-level learning and test-time temporal
+measurement, but response labels must be identified as a separate,
+project-defined transformation.
+
+\subsection{Detection, Classification, and Temporal Localization}
+
+Three output levels recur throughout this thesis. \emph{Binary anomaly
+detection} assigns a video, or sometimes a temporal unit within it, to Normal or
+Anomaly. At video level, the output answers whether the recording contains an
+event from the dataset's anomaly group. A score can be evaluated without fixing
+a decision threshold through AUROC, which equals the probability that a randomly
+chosen positive is ranked above a randomly chosen negative
+\cite{fawcett2006introduction}. Precision, recall, and F1 instead require a
+decision rule. When negatives greatly outnumber positives, a ROC curve can look
+favorable while many false positives remain, and precision--recall analysis
+gives the more informative picture
+\cite{davis2006relationship,saito2015precision}. The distinction matters here
+because the video-level test split is nearly balanced, with 140 anomalous and
+150 normal videos, whereas annotated anomalous frames usually cover only part
+of a video.
+
+\emph{Anomaly classification} assigns semantic labels. The historical task in
+this thesis is single-label 14-class classification: Normal plus the 13
+UCF-Crime anomaly categories form mutually exclusive outcomes. The later
+response task is different. It predicts three non-exclusive channels and can
+activate more than one at a time. A macro-averaged F1 score (Macro-F1) from the
+14-class softmax problem is therefore not commensurate with a Macro-F1 value
+averaged over three
+binary response channels. Label spaces, losses, thresholds, supports, and error
+opportunities all differ.
+
+\emph{Temporal localization} asks where an event occurs. It requires evidence
+at a finer temporal resolution than the video label. In weakly supervised video
+anomaly detection, snippet scores or pooling weights may be projected back to
+time even though interval labels were not used for training. This produces a
+measurable temporal signal, but one that should be evaluated explicitly against
+annotations. Video-level correctness alone cannot establish accurate event
+boundaries, because a model may classify a video from scene context or attend to
+only a small, displaced part of the event.
+
+These tasks form a hierarchy of questions, not a hierarchy of guaranteed
+capabilities. A correct binary decision can coexist with the wrong semantic
+label; a correct response vector can coexist with a temporally displaced
+interval; and a localized high score can coexist with a wrong video decision.
+
+\section{Multiple Instance Learning for Weakly Labeled Video}
+\label{sec:background-mil}
+
+\subsection{Bags, Instances, and Ambiguous Positive Evidence}
+
+Multiple instance learning names exactly this situation: one labeled bag
+contains several instances, and the instance responsible for a positive label
+is unknown \cite{dietterich1997solving}. Its classical assumption is binary --
+a positive bag holds at least one positive instance, a negative bag holds none
+-- and modern neural MIL keeps that separation between bag-level supervision
+and latent instance relevance even as it relaxes the original geometric model.
+
+For video anomaly detection, a complete video becomes a bag and clips or
+snippets become its instances. Normal videos provide negative bags, whereas an
+anomalous video provides a positive bag with an unknown mixture of normal and
+anomalous temporal content. Sultani et al. used this view to learn an anomaly
+ranking function from video-level labels, comparing high-scoring instances from
+anomalous and normal bags while adding sparsity and temporal smoothness
+constraints \cite{sultani2018real}. The formulation directly addresses the
+annotation problem: it does not require the anomalous segment to be labeled
+during training.
+
+Later weakly supervised approaches illustrate why instance selection and
+representation quality are coupled. The Multiple Instance Self-Training
+framework (MIST) alternates MIL-based pseudo-label
+generation with refinement of task-specific video representations
+\cite{feng2021mist}. Robust Temporal Feature Magnitude learning (RTFM) focuses on
+feature magnitudes and selects discriminative
+instances while modeling temporal dependencies \cite{tian2021weakly}. These
+approaches differ in architecture and objective, but both address a common
+difficulty: the normal snippets that dominate an anomalous video's duration can
+overwhelm the comparatively rare positive evidence.
+
+Other weakly supervised methods select or correct instance evidence in
+different ways. RTFM ranks snippets by feature magnitude, and MGFN (Magnitude-Contrastive
+Glance-and-Focus Network) keeps
+magnitudes but adds a magnitude-contrastive loss, motivated by the observation
+that feature magnitudes are inconsistent across scenes
+\cite{tian2021weakly,chen2023mgfn}. Zhong et al. treat the weak labels as noisy
+snippet labels, clean them with a graph convolutional network, and then train a
+supervised action classifier \cite{zhong2019graph}. CLAWS (Clustering Assisted
+Weakly Supervised Learning with normalcy Suppression) combines a
+normalcy-suppression mechanism, which lowers the anomaly scores of normal
+regions, with a clustering-distance loss that separates normal and anomalous
+representations \cite{zaheer2020claws}. Li et al. use sequences of several
+snippets instead of single snippets as the unit of selection and refine the
+snippet scores by self-training with a transformer \cite{li2022self}. The
+attention pooling described in the next subsection ranks instances by learned
+weights rather than by feature magnitude, and in the binary pool every instance
+keeps a non-negative weight. The VadCLIP authors also note that most current
+methods operate on features precomputed by a pretrained extractor such as I3D
+(Inflated 3D ConvNet)
+\cite{wu2024vadclip,carreira2017quo}; the pipeline here likewise works on stored
+clip features.
+
+The bag assumption is useful but imperfect for surveillance video. A video-level
+category may be uncertain, the event may be visually subtle, and a nominally
+normal video cannot enumerate every acceptable behavior. MIL also does not by
+itself specify how to aggregate evidence, how many instances to sample, or how
+to handle a positive bag in which selected clips miss the event. Those choices
+become part of the method and must be assessed under the actual sampling
+protocol.
+
+MIL therefore supplies the correct abstraction for weak video labels, but
+not a guarantee of instance discovery. Fixed-size training bags, fixed-bag
+evaluation, and dense variable-length evaluation expose different subsets of
+the temporal evidence. Their results must therefore be named by input protocol
+rather than treated as interchangeable measurements of one abstract model.
+
+\subsection{Pooling, Attention, and Top-Instance Selection}
+
+A MIL model requires a permutation-invariant operation that converts a set of
+instance representations into a bag representation. Maximum pooling embodies a
+strong positive-instance assumption: the most activated instance determines the
+bag. Mean pooling distributes influence across all instances, which can suppress
+a brief event when normal content dominates. Top-$k$ pooling lies between these
+extremes by using a selected subset, but its behavior depends on both $k$ and the
+ranking function.
+
+Attention-based MIL learns non-negative instance weights that sum to one and
+forms a weighted bag representation -- a trainable, permutation-invariant
+alternative to fixed pooling operators \cite{ilse2018attention,zaheer2017deep}.
+The weights identify which instances contribute most to the aggregate and
+accommodate bags of different sizes, without requiring an externally specified
+positive clip during training.
+
+Attention pooling and top-instance pooling answer related but different needs.
+The weighted mean gives the classifier a differentiable global summary. A
+top-attention subset allows a second branch to retain high-ranked instances and
+combine statistics such as their element-wise maximum and mean. Maximum values
+can preserve a strong feature response, while the mean describes what is shared
+across the selected subset. Concatenating these statistics with the attention
+pool provides more than one view of a bag without claiming that any individual
+view is sufficient.
+
+Softmax attention is also only relative within a bag: adding instances changes
+the normalizing denominator and can shift every weight even when one clip's
+representation is unchanged, so a threshold applied after per-video smoothing
+is not a global probability threshold. The same effect scales the top-quarter
+selection rule from four clips in a 16-instance training bag to many more
+clips in dense evaluation, from the identical checkpoint.
+
+The implementation studied here uses one shared attention scorer for binary
+pooling and for ranking instances used by the response branch. This reuses a
+common temporal ordering, but it does not prove that the ordering is optimal
+for both tasks.
+
+\section{Video Representation Learning and Parameter-Efficient Adaptation}
+\label{sec:background-representation}
+
+\subsection{VideoMAE Representations}
+
+Video inputs contain appearance and motion across space and time. A clip encoder
+must transform that high-dimensional signal into a representation that can be
+stored, sampled, and aggregated. Transformer-based video encoders divide a clip
+into spatio-temporal tokens and use self-attention layers to model relations
+among them. The design follows the Transformer \cite{vaswani2017attention} and
+its application to images as sequences of patches in the Vision Transformer
+\cite{dosovitskiy2020image}. The output can remain token-level for fine spatial
+reasoning or be pooled into one vector per clip for downstream temporal
+modeling.
+
+VideoMAE learns such representations through masked autoencoding
+\cite{tong2022videomae}: during self-supervised pretraining it masks a high
+proportion of spatio-temporal tube tokens and reconstructs the missing content,
+exploiting temporal redundancy to force the encoder toward structure that
+survives reconstruction. The published model is a general video representation
+learner; it does not encode the UCF-Crime response mapping or the evaluation
+protocol used in this thesis.
+
+Using a pretrained clip encoder separates two learning problems. The encoder
+maps pixels to features, while the MIL model learns how to combine features
+across a video. This separation can make long-video experiments tractable
+because clip embeddings are extracted once and reused. It also creates a strong
+provenance dependency: after features are frozen, later experiments are
+conditional on the exact encoder checkpoint, preprocessing, software loader,
+sampling choices, and stored feature identities.
+
+The pipeline uses globally averaged VideoMAE token states rather than retaining
+patch-level tokens. This provides a compact clip representation for MIL, but
+removes the information needed for spatial localization within a frame. Dense
+temporal sampling can improve coverage along the time axis; it cannot recreate
+discarded spatial tokens.
+
+\subsection{Low-Rank Adaptation}
+
+Full fine-tuning updates every parameter of a pretrained encoder, at a
+corresponding optimizer-state and storage cost. LoRA avoids that cost by
+freezing the pretrained weight matrix and representing its task-specific
+update as the product of two trainable low-rank matrices instead
+\cite{hu2021lora}. If a frozen projection is
+$W_0$, the adapted projection has the form
+\begin{equation}
+    W' = W_0 + \frac{\alpha}{r}BA,
+\end{equation}
+where $r$ is the chosen rank and $A$ and $B$ are the trainable factors. When
+$r$ is much smaller than the input and output dimensions, the number of
+trainable parameters is substantially smaller than for a dense update.
+
+LoRA is one of several parameter-efficient alternatives to full fine-tuning.
+Adapter modules insert small trainable layers into a frozen network
+\cite{houlsby2019parameter}, and ST-Adapter, AIM, and AdaptFormer use such
+modules to transfer pretrained image transformers to video or to adapt
+pretrained vision transformers to new recognition tasks
+\cite{pan2022st,yang2023aim,chen2022adaptformer}. Prompt tuning takes a
+different route and learns a small set of input tokens while the backbone stays
+frozen \cite{lester2021power,jia2022visual}. He et al. show that several of
+these methods can be described as modifications of specific hidden states of
+the pretrained model \cite{he2022towards}. No comparison among these
+alternatives was run for this thesis; LoRA was a design choice, and its
+selection is not a result.
+
+LoRA was introduced for large language models, so applying it to a video
+transformer is a transfer of an adaptation mechanism rather than a new LoRA
+method. The practitioner must still choose which projections receive adapters, the rank,
+scale, dropout, optimization schedule, and selection criterion. Parameter
+efficiency does not imply compute-free adaptation, and a small trainable subset
+does not guarantee better generalization than frozen features or full
+fine-tuning.
+
+In a sequential pipeline, adapter selection also precedes downstream evidence.
+Once the adapted encoder is frozen and the feature store is extracted, the MIL
+model cannot correct the encoder through pixel-level gradients. Conversely,
+repeating only MIL training does not measure variation in adapter training. A
+three-seed MIL result over one feature store is therefore narrower than a
+three-seed repetition of the whole pipeline.
+
+For this thesis, LoRA has a limited and defensible rationale: it provides a
+parameter-efficient task-adaptation stage before frozen feature extraction. The
+final results evaluate the executed LoRA--prototype--MIL sequence, but there is
+no matched test experiment that isolates a causal performance gain from LoRA.
+This boundary is essential to the interpretation of RQ1.
+
+\section{Normal Prototypes and Guided Instance Sampling}
+\label{sec:background-prototypes}
+
+Distance from a representation of normality is a recurring idea in anomaly
+detection. A single global center can be too restrictive when routine behavior
+has several modes, while a set of prototypes can summarize multiple regions of
+the normal feature space. A clip far from its nearest normal prototype may be
+unusual under that representation, although distance alone does not reveal the
+semantic cause or prove that the clip is anomalous.
+
+Prototype memories have also appeared in weakly supervised video anomaly
+detection. Uncertainty Regulated Dual Memory Units (UR-DMU) learns normal and
+abnormal memory units and uses them to
+separate feature structure under weak supervision \cite{zhou2023ur}. The present
+pipeline makes a narrower construction. It clusters only embeddings from normal
+training videos, then defines a clip score by squared distance to the nearest
+normal center. It does not reproduce the dual-memory architecture, uncertainty
+regulation, or training objective of UR-DMU.
+
+The distance can affect learning in two conceptually separate ways. As an
+appended scalar feature, it lets the MIL model decide whether distance is useful
+alongside the clip embedding. As a sampling guide, it increases the chance that
+high-distance clips enter a fixed-size training bag after an initial uniform
+warm-up. The first mechanism changes what the model observes at each instance;
+the second changes which instances the model receives. Either can help, have no
+effect, or amplify irrelevant novelty such as camera changes and unusual but
+normal motion.
+
+The code calls this frozen scoring and selection role the \emph{teacher};
+this thesis uses the term \emph{prototype distance}. Neither term means that the distance is calibrated ground truth,
+that it was trained from temporal annotations, or that the final attention must
+be monotonic in distance. The mechanisms therefore require a factorial
+comparison: score input on or off, crossed with guided or uniform sampling. In
+this thesis that comparison is validation-only, so it can describe behavior
+within the frozen validation protocol but cannot establish a general causal or
+test-set benefit.
+
+\section{Multi-Label Response Prediction, Imbalance, and Gating}
+\label{sec:background-response}
+
+\subsection{From Exclusive Categories to Non-Exclusive Channels}
+
+Single-label classification assumes that exactly one class is correct. A
+softmax output implements this competition by normalizing scores across classes.
+Multi-label classification instead permits several labels to be positive at
+once. Zhang and Zhou describe it as learning from examples that are each
+represented by a single instance but associated with a set of labels
+\cite{zhang2014review}, and early work on multi-label scene classification
+illustrates why one scene can require more than one semantic description
+\cite{boutell2004learning}. Neural multi-label models commonly emit one logit per
+label and apply an independent sigmoid, so activating one channel does not
+mathematically suppress the others.
+
+That formulation fits the structure of a response vector better than a
+14-class softmax because Police, Medical, and Fire can co-occur. It does not
+validate the labels themselves; the project-defined mapping used here is given
+in Section~\ref{sec:task-formulation} and Table~\ref{tab:response-map}.
+
+The reformulation also changes the meaning of error. A 14-class mistake chooses
+the wrong exclusive category. A multi-label mistake can be an extra channel, a
+missing channel, or a completely wrong vector. When common categories share a
+channel, a classifier can achieve high recall by emitting that channel broadly.
+An all-services predictor makes this degeneracy visible: it never misses a
+positive channel but creates many unnecessary positives and cannot distinguish
+among response combinations.
+
+\subsection{Imbalance-Aware Learning and Matched Metrics}
+
+Multi-label data often contain many more negative label positions than positive
+ones. Asymmetric Loss (ASL) targets exactly this imbalance: it applies
+different focusing factors to positive and negative targets and shifts
+negative probabilities so that easy negatives receive little or no weight
+\cite{ridnik2021asymmetric}, echoing the focal loss's down-weighting of
+well-classified examples in dense object detection \cite{lin2017focal}. Such
+weighting changes the training emphasis; it does not by itself choose a
+calibrated decision threshold or guarantee balanced channel precision and
+recall.
+
+The implementation adds an important task-specific condition: response loss is
+computed only for anomalous training bags. Normal videos train the binary branch
+but do not directly train the response head toward the all-zero vector. This
+separation makes it especially important to distinguish raw response output
+from binary-gated output. A raw sigmoid can be positive for a normal video
+because the response head was optimized for service discrimination conditional
+on anomalous training examples.
+
+Binary gating composes two predictions. If $\widehat{y}^{\mathrm{bin}}_j$ is the
+binary anomaly decision and $\widehat{\vect{y}}^{\mathrm{resp}}_j$ is the
+thresholded response vector, then the gated output is
+\begin{equation}
+    \widehat{\vect{y}}^{\mathrm{gated}}_j
+    = \mathbb{1}\!\left[\widehat{y}^{\mathrm{bin}}_j=\text{Anomaly}\right]
+      \widehat{\vect{y}}^{\mathrm{resp}}_j.
+\end{equation}
+The gate can remove response false positives on videos classified as Normal, but
+it can also erase all response channels for a binary false negative. It changes
+the system's error profile without changing the learned response logits.
+
+Precision, recall, Macro-F1, Hamming loss, and exact match each expose a
+different failure mode -- over-prediction, missed positives, channel-weighted
+balance, aggregate error count, and complete-vector correctness, respectively
+\cite{sokolova2009systematic} -- and are defined precisely in Methods
+(\S\ref{sec:evaluation-paths}). A response model can have acceptable Macro-F1
+but poor exact match if it frequently adds or omits one channel, so no single
+summary is sufficient on its own.
+
+Matched populations and baselines are crucial. Raw and gated metrics must use the
+same 290 videos to isolate the computational effect of gating. Restricting
+evaluation to ground-truth anomalous videos is an oracle-conditioned diagnostic,
+not an operational pipeline. Comparing learned gated output with an
+all-services rule behind the same binary gate further asks how much value comes
+from channel selection rather than from anomaly detection alone.
+
+\section{Temporal Grounding and Attention Caveats}
+\label{sec:background-temporal}
+
+\subsection{From Clip Scores to Temporal Evidence}
+
+Temporal grounding connects a sequence of clip scores to annotated event
+intervals. Its validity begins with geometry: every clip must be mapped to the
+source frames it actually covers. Nominal sampling rates are not enough when
+source frame rates differ or integer decimation is used. Coverage should be
+reported separately from localization performance because a method cannot align
+with an event it never observes, while observing every annotated frame does not
+ensure that it scores those frames highly.
+
+Several metrics expose different properties. Temporal average precision (AP)
+evaluates the ordering of projected frame scores across thresholds. It is
+threshold-free but does not directly measure whether a fixed predicted interval
+has accurate boundaries. Top-clip hit asks whether the single highest-scoring
+clip intersects any ground-truth interval; it is intuitive but gives the same
+credit to a one-frame intersection and broad overlap. Interval intersection over
+union (IoU) compares predicted and annotated temporal support under a declared
+rule and penalizes both missed event frames and excess predicted duration.
+Temporal action localization evaluates detections by their IoU with annotated
+segments at several thresholds: the THUMOS challenge uses thresholds from 0.1
+to 0.5 \cite{idrees2017thumos}, and W-TALC (Weakly-Supervised Temporal Activity
+Localization and Classification) additionally reports 0.7
+\cite{paul2018wtalc}. The thresholds 0.1, 0.3, 0.5, and 0.7 used in this thesis
+are its own declared choice within this range. The frequency of exactly zero IoU keeps complete failures visible when a mean could
+hide them.
+
+These metrics can disagree. A model can rank anomalous frames above routine
+frames and obtain useful AP while its smoothing and threshold rule yields broad
+or displaced intervals. Conversely, predicting the whole video guarantees
+non-zero overlap whenever an event exists but provides no temporal selectivity.
+Frozen whole-video, uniform, random, and prototype-distance references help
+interpret whether a learned attention sequence adds rank or boundary information
+beyond such trivial behavior.
+
+Scores should be aggregated per video before averaging because both event
+prevalence and attention normalization vary with video length. Pooling every
+frame from every video into one evaluation would allow long recordings to
+dominate and would mix score scales that are only relative within their bags.
+The thesis therefore uses per-video temporal metrics on a declared eligible
+population and reports annotation-boundary exclusions rather than silently
+clipping ground truth.
+
+The synthesis is that temporal grounding is multi-dimensional: coverage, rank
+quality, top-instance intersection, fixed-rule boundary overlap, and complete
+failure frequency answer different questions. RQ4 consequently requires all of
+them rather than a selected qualitative heatmap.
+
+\subsection{Attention Is Not Calibrated Explanation}
+
+Attention weights are useful computationally because they determine how
+instances contribute to a pooled representation. It is tempting to read a large
+weight as a causal explanation of the prediction. Evidence from standard
+attention models shows that substantially different attention distributions can
+sometimes produce similar predictions and that attention need not agree with
+other feature-importance measures \cite{jain2019attention}. Although that study
+examined natural-language tasks rather than surveillance video, it directly
+challenges the general inference from ``high attention'' to ``faithful
+explanation.''
+
+The limitation is stronger here because the attention scorer is trained from
+bag labels, not interval labels. Its primary optimization role is to form a
+representation useful for video-level losses. A clip can receive weight because
+it contains event evidence, because it carries correlated scene information, or
+because emphasizing it helps the classifier in another way. Softmax weights also
+sum to one even when no truly anomalous clip exists, so every normal video has a
+highest-attended clip.
+
+Measured overlap with temporal annotation remains informative. It tests whether
+the learned ordering aligns empirically with event support more than frozen
+references. The appropriate term is \emph{temporal grounding}: a relationship
+between model saliency and annotated time. This does not turn the weights into
+calibrated probabilities, prove that highlighted frames caused the prediction,
+or establish precise event localization.
+
+In this thesis, attention is therefore used twice but interpreted narrowly: it
+is a pooling and ranking mechanism in the model, and its dense outputs are a
+signal evaluated for temporal alignment. Claims of faithful explanation or
+causal attribution remain outside the evidence.
+
+\section{Comparison of Related Approaches}
+\label{sec:background-comparison}
+
+Table~\ref{tab:related-comparison} places the weakly supervised methods
+discussed in this chapter side by side. The AUC column repeats the frame-level
+values that each paper reports for its own method on UCF-Crime; the values were
+obtained under different features and training settings and are listed to
+orient the reader, not to rank the methods. Frame-level AUC has also been argued
+to reward differences between recording sources as well as event localization,
+and to lack the resolution to separate small margins at the size of the
+UCF-Crime test split \cite{abdulaziz2026auditing}. The video-level AUROC reported in this thesis is
+not comparable with these values (Section~\ref{sec:results-protocol}).
+
+\begin{table}[!ht]
+    \centering
+    \small
+    \caption[Related weakly supervised approaches on UCF-Crime.]{Related weakly supervised approaches on UCF-Crime. AUC is the frame-level value each paper reports for its own method; the values use different features and protocols and are not a ranking. Every method outputs a binary anomaly score; ``adds'' marks further outputs.}
+    \label{tab:related-comparison}
+    \begin{tabularx}{\textwidth}{@{}l l >{\raggedright\arraybackslash}X r@{}}
+        \toprule
+        \textbf{Method} & \textbf{Features} & \textbf{Key idea} & \textbf{AUC (\%)} \\
+        \midrule
+        Sultani et al.\ \cite{sultani2018real} & C3D & MIL ranking of the top segment & 75.41 \\
+        Zhong et al.\ \cite{zhong2019graph} & TSN & Graph-based label-noise cleaning & 82.12 \\
+        CLAWS \cite{zaheer2020claws} & C3D & Normalcy suppression, clustering loss & 83.03 \\
+        MIST \cite{feng2021mist} & I3D & Pseudo-labels, self-guided attention & 82.30 \\
+        RTFM \cite{tian2021weakly} & I3D & Top-$k$ feature magnitude & 84.30 \\
+        MSL \cite{li2022self} & VideoSwin & Multi-sequence top-$k$, self-training & 85.62 \\
+        UR-DMU \cite{zhou2023ur} & I3D & Dual memory units, uncertainty & 86.97 \\
+        MGFN \cite{chen2023mgfn} & I3D & Glance-and-focus, magnitude contrast & 86.98 \\
+        PEL4VAD$^{*}$ \cite{pu2023learning} & I3D & Context aggregation, text prompts & 86.76 \\
+        Karim et al.\ \cite{realtime2024wacv} & End-to-end & Trained jointly for real-time decisions & 86.94$^{\dagger}$ \\
+        VadCLIP \cite{wu2024vadclip} & CLIP & Dual branch, text alignment; adds category & 88.02 \\
+        Holmes-VAD$^{*}$ \cite{zhang2024holmes} & Multimodal LLM & Instruction-tuned explanation; adds text & 89.51 \\
+        \midrule
+        This thesis & VideoMAE + LoRA & Shared attention, top-quarter pooling; adds three response channels and intervals & n/a \\
+        \bottomrule
+    \end{tabularx}
+
+    \smallskip
+    {\footnotesize $^{*}$ Preprint. \quad $^{\dagger}$ Value taken from the paper's abstract; all other values come from the results tables.\par}
+\end{table}
+
+Three differences follow from the table. First, the compared methods output
+an anomaly score, in two cases with an anomaly category or a text explanation,
+while this thesis predicts three non-exclusive response channels that none of
+them addresses. Second, most compared papers evaluate temporal evidence through
+the pooled frame-level AUC; VadCLIP additionally reports category-level
+detection precision at interval-overlap thresholds. This thesis instead
+measures per-video interval overlap and average precision and compares both
+with trivial temporal references. Third, the table lists one number per method,
+whereas this thesis repeats Stage-2 training over three seeds and compares every
+learned output with a matched trivial rule. The thesis does not propose a new detector and does not compete
+on frame-level AUC. Its contribution lies in this combination of outputs and
+evaluation, which Chapter~\ref{chap:methods} specifies.

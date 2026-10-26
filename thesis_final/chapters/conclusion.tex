@@ -1,0 +1,34 @@
+% !TeX root = ../thesis.tex
+\chapter{Conclusion}
+\label{chap:conclusion}
+
+This thesis built and evaluated a weakly supervised pipeline that answers three
+questions for each UCF-Crime video: whether it is anomalous, which of three
+project-defined services it involves, and where the event occurs. The pipeline
+adapts VideoMAE with LoRA, adds a normal-prototype distance to frozen clip
+features, and trains an attention MIL model with a binary head and a
+three-channel response head. Each output was compared with a trivial rule on the
+same videos, across repeated Stage-2 training and two test input paths.
+
+The three outputs behave very differently. Video-level anomaly detection is
+strong and stable across seeds and input paths. Response selection is weak: the
+response head defaults to Police and over-predicts the other services, and after
+the binary gate it adds little over predicting every service for each detected
+anomaly. Adding normal bags to the response loss removes the Police default but
+not the weak selection. Attention ranks annotated frames above trivial
+references, but its intervals are no more precise than predicting the whole
+video.
+
+The contribution is therefore less a better detector than a clearer measurement
+of what such a pipeline delivers. Matched trivial rules, per-video temporal
+references, and the separation of seed variation from test-sampling uncertainty
+showed that most of the apparent response capability comes from the binary
+decision. Response targets derived from dataset categories reward a default
+rather than selective behavior; meaningful response prediction needs targets
+grounded in expert judgment or observed service needs.
+
+The next steps follow directly: expert-validated response targets with an
+abstention option, matched component baselines on the existing pipeline,
+evaluation on external data, and grounding studied as its own task. Operational
+integration, with human oversight and privacy governance, belongs only after
+these steps.

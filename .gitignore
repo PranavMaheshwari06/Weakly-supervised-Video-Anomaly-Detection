@@ -43,3 +43,19 @@ checkpoints/
 tmp/
 cache/
 *.tmp
+
+# LaTeX build files of thesis_final/ (a build writes them next to the sources unless -outdir is used)
+thesis_final/**/*.aux
+thesis_final/**/*.bbl
+thesis_final/**/*.bcf
+thesis_final/**/*.blg
+thesis_final/**/*.fdb_latexmk
+thesis_final/**/*.fls
+thesis_final/**/*.lof
+thesis_final/**/*.log
+thesis_final/**/*.lot
+thesis_final/**/*.out
+thesis_final/**/*.run.xml
+thesis_final/**/*.toc
+thesis_final/**/*.bcf-SAVE-ERROR
+thesis_final/thesis.pdf

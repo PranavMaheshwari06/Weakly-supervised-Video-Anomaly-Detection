@@ -1,0 +1,41 @@
+{
+  "scope": "paired video-level bootstrap over the fixed test population; video-sampling uncertainty only, not training/seed variance",
+  "settings": {
+    "resamples": 10000,
+    "rng_seed": 0,
+    "level": 0.95,
+    "interval": "percentile",
+    "statistic": "mean over seeds 1337/2027/3407 per resample"
+  },
+  "inputs": {
+    "package": "artifacts/stage2/evidence/canonical_thesis_v1/package.json",
+    "package_sha256": "346ad82324c95db37fbbc92685c57ff316436f5237db29368196461e253a1a78",
+    "temporal_record_files": 870
+  },
+  "fixed_bag_binary_auroc": {
+    "videos": 290,
+    "point": 0.9402857142857144,
+    "ci": [
+      0.909650647427847,
+      0.9667482698137387
+    ]
+  },
+  "fixed_bag_gated_margin_macro_f1": {
+    "definition": "learned binary-gated Macro-F1 minus binary-gated all-services Macro-F1",
+    "videos": 290,
+    "point": 0.015309083910882334,
+    "ci": [
+      0.007704309642348138,
+      0.023290898539045986
+    ],
+    "share_resamples_le_zero": 0.0002
+  },
+  "dense_temporal_ap_minus_whole_video": {
+    "videos": 135,
+    "point": 0.13572967643065903,
+    "ci": [
+      0.10953943872207234,
+      0.1643284337604438
+    ]
+  }
+}

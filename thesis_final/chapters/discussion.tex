@@ -1,0 +1,391 @@
+% !TeX root = ../thesis.tex
+\chapter{Discussion}
+\label{chap:discussion}
+
+This chapter first answers the research questions, then interprets why the
+three outputs behave so differently, relates the findings to prior work, and
+draws implications before turning to limitations, ethics, and future work.
+Numbers are repeated only where an argument depends on them; the complete values
+are in Chapter~\ref{chap:results}.
+
+\section{Answers to the Research Questions}
+\label{sec:discussion-rq-answers}
+
+\subsection{RQ1: Video-Level Binary Anomaly Detection}
+\label{sec:discussion-rq1}
+
+Video-level binary detection is the solid result of the thesis. All three
+checkpoints reached an AUROC of about 0.94 on both the fixed-bag and the dense
+indexed input (Tables~\ref{tab:results-fixed-binary}
+and~\ref{tab:results-dense-routing}), and their binary decisions agreed on
+95.2\% of the test videos. Resampling the test videos moves the fixed-bag
+AUROC between about 0.91 and 0.97, which is wider than the spread between seeds.
+This holds for the pipeline as executed, with one adapted feature store and one prototype memory. No experiment isolates the contribution of LoRA, the prototypes, or MIL (Section~\ref{sec:discussion-binary}).
+
+\subsection{RQ2: Historical and Response-Label Error Profiles}
+\label{sec:discussion-rq2}
+
+The historical 14-class outputs concentrated their predictions on Normal and
+recognized the anomaly categories poorly (Table~\ref{tab:results-historical}).
+The three-channel response formulation fails differently. Its raw output has
+near-complete recall but low precision, activates Police for every video, and
+never predicts the empty or the Medical-and-Fire vector
+(Table~\ref{tab:results-fixed-raw}, Figure~\ref{fig:results-joint-dispatch}).
+The two tasks are not a before-and-after comparison. Adding normal bags to the
+response loss removed the universal Police output on validation, but did not
+improve service selection beyond the seed spread of the control
+(Table~\ref{tab:results-normal-bag}).
+
+\subsection{RQ3: Stage-2 Stability and Matched Binary Gating}
+\label{sec:discussion-rq3}
+
+Binary decisions are stable across the three Stage-2 seeds; complete response
+vectors are not, with unanimity for only half of the test videos
+(Table~\ref{tab:results-unanimity}). Binary gating changes the matched error
+profile substantially (Table~\ref{tab:results-fixed-routing}), but almost all
+of that change also occurs when every service is predicted after the same gate.
+The learned head adds 0.015 in Macro-F1 over that rule. The margin is positive
+under video resampling, but it comes from two of the three seeds: for seed 2027
+the learned gated output is identical to the rule.
+
+\subsection{RQ4: Dense Indexed Temporal Alignment}
+\label{sec:discussion-rq4}
+
+Attention aligns with annotated intervals measurably but weakly. Its temporal
+AP exceeds all four frozen references, with a gap to the whole-video chance
+level that stays clearly positive under video resampling
+(Table~\ref{tab:results-temporal-baselines}). Its interval overlap, however,
+stays at the level of predicting the whole video, and one eligible video in five
+receives an interval that misses the event entirely. Attention is therefore a
+weak temporal ranking signal, not an event-boundary estimator.
+
+\section{Interpretation}
+\label{sec:discussion-evidence}
+
+\subsection{Why the Response Head Defaults to Police}
+\label{sec:discussion-police}
+
+The universal Police output follows from the target design and the loss. In
+the project mapping, Police is positive for every anomaly category except
+Explosion (Table~\ref{tab:response-map}); 703 of the 729 anomalous training bags
+(96\%) carry a Police label. The response loss is evaluated on anomalous bags
+only (Section~\ref{sec:optimization}), so the head is never trained toward an
+all-zero vector. An output that always activates Police therefore loses little,
+and this is what the trained heads do: Police precision equals $119/290$ in every
+seed, the value obtained by assigning Police to every test video. Because the
+official runs predicted Police for every validation video at every logged epoch
+(Section~\ref{sec:results-normal-bag}), no checkpoint-selection rule could have
+avoided it.
+
+Medical and Fire are over-predicted as well, but not as a copy of their prior.
+Among anomalous training bags, 39.8\% carry Medical and 24.3\% carry Fire; the
+heads predicted them for 88.0\% and 73.1\% of the test videos. Their precision
+lies above the test prevalence, by about a third for Fire, but far from what
+selective routing would require. Two further properties of the objective push
+in the same direction and were not varied: the asymmetric loss down-weights
+negative targets strongly ($\gamma_-=6$, \cite{ridnik2021asymmetric}), and the
+response threshold of 0.5 was never tuned. Either can raise the share of
+positive decisions independently of the features.
+
+\subsection{What the Normal-Bag Study Does and Does Not Show}
+
+Adding normal bags to the response loss removes the symptom it targets: raw
+Police precision on validation rises, and the response head no longer
+predicts Police for most normal videos. The raw margins in Table~\ref{tab:results-normal-bag}
+therefore mostly show that the response head now also separates normal from
+anomalous videos, which the binary head already does. Once both arms are gated
+identically, or restricted to the anomalous videos, the variant does not differ
+from the control beyond the seed spread, and Police still fires on every
+Explosion video. The weighted variant makes the simplest explanation, that the
+merged mean diluted the anomalous signal, unlikely. Leaving normal bags out of the
+response loss thus explains the universal Police output, but not the weak
+service selection.
+
+A plausible further cause lies upstream. Each response vector is a fixed
+function of the anomaly category, so a head can only select services as well as
+the features separate the categories. The encoder,
+\code{MCG-NJU/videomae-base}, is the self-supervised pre-trained VideoMAE
+checkpoint \cite{tong2022videomae}, which is intended to be fine-tuned on a
+downstream task, and its mean-pooled clip features were adapted here only once,
+with inherited clip labels. Whether these features separate the 13 categories
+was not tested, so this is only a hypothesis about this checkpoint and adaptation.
+
+\subsection{Why the Binary Gate Supplies Most of the Value}
+
+Binary gating suppresses all response positives after a Normal decision. Since
+the raw head predicts at least Police for every normal video, this removes most
+of its false positives, and the large changes in Macro-F1, Hamming loss, and
+exact match follow. The binary-gated all-services rule receives the same
+benefit without learning anything about services, which is why it is the
+relevant reference. The remaining learned margin is small, rests on two of three
+seeds, and should be read against a second source of variation: in the
+validation studies, changing only how the training bags were drawn moved
+validation Macro-F1 by up to 0.033 for the same seed
+(Section~\ref{sec:method-limits}). A margin of this size is therefore a description
+of these three checkpoints on these 290 videos, not an established property of
+the method. The low unanimity of complete response vectors points the same way:
+small aggregate standard deviations do not imply that a video receives the same
+services from each checkpoint.
+
+\subsection{What the Binary Detector May Rely On}
+\label{sec:discussion-binary}
+
+The binary result is consistent with event-related evidence, but an alternative
+cannot be excluded. The fixed bags observe about 12\% of the source frames, the
+dense input almost all of them, and the AUROC is the same. One reading is that
+16 clips already carry the usable evidence. Another is that the decision relies
+on properties shared by the whole video, such as scene, camera, resolution, or
+compression, which differ between UCF-Crime's normal and anomalous recordings.
+Abdulaziz and Bondarev report that, on normal footage alone, every model they
+examined separates UCF-Crime videos by such recording properties
+\cite{abdulaziz2026auditing}. The weak temporal grounding is compatible with
+both readings. The selection history adds a further point: the seed-2027
+checkpoint is its epoch-0 model and reaches the same AUROC as the others, so the
+binary separation is largely available after one epoch of Stage-2 training on
+the fixed features and prototype distance. Neither shortcut probes nor a
+matched frozen-feature or mean-pooling baseline were run, so the binary result
+cannot be attributed to any single component.
+
+\subsection{Prototype Distance}
+
+In the validation-only study, guided sampling showed no consistent difference
+across seeds and appending the distance did not raise mean Macro-F1. One
+possible reason is the input scale: the distance is a single value between 0
+and 4 appended to a 768-dimensional unnormalized embedding
+(Equation~\ref{eq:augmented-instance}), so its influence on the attention scorer
+may be small. The study uses one validation split that also selected the checkpoints, so it neither supports nor rules out a benefit on test data.
+
+\subsection{Why Temporal AP and IoU Disagree}
+\label{sec:discussion-temporal}
+
+AP rewards the ranking of frames, whereas IoU judges the single interval that
+the fixed rule extracts from that ranking. The rule normalizes the smoothed
+attention to the range of each video, so it always marks the upper part of that
+range, whatever the absolute attention level. It produced an interval for every
+normal test video, and on anomalous videos it can mark a broad or displaced
+region even when annotated frames rank high. A broad interval approaches the
+whole-video reference, which is consistent with the learned IoU lying at that
+reference's level. The AP gain, in turn, is measured against a chance level
+that equals the event prevalence; events covering most of a video raise the AP
+of every method.
+
+The qualitative cases in Figure~\ref{fig:results-qualitative} show both failure
+types. In \code{Burglary017} and \code{Explosion036}, attention peaks after the
+annotated event, and in the false alarm a confident binary score coincides with
+a sharp attention block in a normal video. Two properties of the setup may
+contribute. The model was trained on 16-instance bags but is applied to dense
+bags of about 238 clips, and softmax attention changes its scale with bag
+length; the near-complete dense coverage makes input sparsity an unlikely
+explanation, but not this length shift. In addition, attention was trained only
+to pool evidence for the video label, not to localize, and standard attention
+weights need not explain a model's decision \cite{jain2019attention}. No alternative interval rule or bag length was evaluated, so both remain explanations. The category-level AP values
+(Appendix~\ref{app:temporal-category}) rest on two to 23 videos per category and
+do not support a ranking of categories.
+
+\subsection{Historical Task Reformulation}
+\label{sec:discussion-historical}
+
+The historical 14-class outputs motivated the response formulation, but they
+are not an ablation. Their two runs differ in features, prototype inputs,
+training settings, and provenance, so their difference is not an effect of
+LoRA. The three-channel formulation was chosen because it can represent
+overlapping services, which one exclusive label cannot. It did not remove the
+failure: predominant Normal prediction gave way to high-recall over-prediction,
+and the two tasks share no metric that would make a numerical comparison
+meaningful.
+
+\section{Relation to Prior Work}
+\label{sec:discussion-prior-work}
+
+The methods in Table~\ref{tab:related-comparison} report detection as one
+frame-level AUC per method. This thesis measures something different and cannot
+place itself in that ranking: its AUROC is video-level, and its temporal
+evaluation is per video. Two observations nevertheless connect the findings to
+the literature. First, Abdulaziz and Bondarev argue that pooled frame-level AUC
+mixes localization with differences between recording sources and cannot
+resolve small margins on the UCF-Crime test split \cite{abdulaziz2026auditing}.
+The present results point to the same two issues from a different angle: a
+strong video-level score coexists with weak per-video localization, and the
+headline margins of this thesis are small relative to test-sampling and
+training variation. Second, none of the compared methods has a response output,
+so none reports a matched rule for one. The comparison with binary-gated all-services shows
+why such a rule matters: without it, the gated Macro-F1 of 0.662 would suggest
+a response capability that the head largely does not have. Recent
+vision-language methods such as VadCLIP and Holmes-VAD name or describe
+anomalies \cite{wu2024vadclip,zhang2024holmes}; whether their outputs select
+services better than a matched rule is an open question that the same kind of
+reference could answer.
+
+\section{Implications}
+\label{sec:discussion-implications}
+
+For weakly supervised video anomaly detection, the results suggest three
+reporting practices: compare each learned output with a trivial rule on the same
+population and after the same gate; evaluate temporal evidence per video
+against a whole-video reference, whose AP equals the event prevalence; and
+report training variation over seeds separately from test-sampling uncertainty
+over videos. Each is cheap, and each changed the reading of a result in this
+thesis.
+
+For response-oriented work, the main implication concerns the targets. A
+deterministic category-to-service lookup makes Police the default of the label
+space, and a model trained on it learns that default. Response targets that can
+reward selective behavior need independently annotated or observed service
+needs. The base rate matters as well. On the dense input, about one normal
+video in ten received a binary false positive, and the binary recall was about
+0.86. If, for illustration, one recording in a hundred contained an event, a
+thousand recordings would yield about nine true alerts and about 97 false ones,
+roughly eleven false alerts for each true alert. The test split, with almost
+half of its videos anomalous, hides this ratio.
+
+\section{Limitations}
+\label{sec:discussion-limitations}
+
+\subsection{Evaluation History and Statistical Scope}
+
+The fixed test outcomes had been inspected before this thesis was written.
+Development-stage runs that predate the frozen protocol were also evaluated on
+the test split; they are not reported, while the official protocol is reported
+in full. Section~\ref{sec:method-limits} separates design constants recorded
+before the first test evaluation from inherited ones. This history raises the
+risk that earlier choices were indirectly informed by test behavior, and a
+credible next evaluation needs an external test set or a nested design.
+
+Two kinds of uncertainty are reported, and both are partial. The sample
+standard deviations describe three Stage-2 runs over the same adapter, features,
+prototypes, and evaluation artifacts, not whole-pipeline variation. The bootstrap
+intervals describe the sampling of the 290 test videos, not training variance or
+variation across sites. Neither licenses a population-level reliability claim.
+The validation curves stay close to the all-services reference, so checkpoint
+selection operates near a noise floor: the selected epochs differ widely,
+including epoch 0 for seed 2027, and differences between seeds are not read as
+differences between trained models. The Full arm of the prototype-distance study
+does not reproduce the official checkpoints because its training bags were drawn
+differently (Section~\ref{sec:method-limits}), which bounds how far small
+validation margins can be interpreted.
+
+No matched experiment isolates a component: there is no Stage-2 run on
+non-adapted features, no mean-pooling baseline, no category-separability probe,
+and no alternative encoder. The thesis therefore makes no claim about the
+contribution of LoRA, the prototype memory, or MIL. The historical 14-class
+outputs are saved outputs, not controlled experiments, and the two validation
+studies use the same split for selection and reporting.
+
+\subsection{Dataset, Supervision, and Target Validity}
+
+All quantitative evidence comes from UCF-Crime, with its cameras, categories,
+recording conditions, and event prevalence. There is no external dataset, new
+site, or cross-camera holdout, so no generalization claim is made. Supervision is
+weak at two levels: sampled clips inherit a video category during adaptation,
+and one video-level target supervises each Stage-2 bag. Both can entangle scene
+and camera cues with the event signal.
+
+The temporal annotations are read as one-based and inclusive, following the
+referenced evaluation code, but the convention of the released coordinates was
+not independently established. Five annotations end beyond the decoded source
+length; they were left unmodified and excluded from temporal metrics only.
+
+Most importantly, Police, Medical, and Fire are not observed service decisions.
+They are deterministic project labels derived from UCF-Crime categories; no
+dispatcher or other domain expert validated the mapping, and no attendance or
+outcome data were available. Metrics against these vectors measure agreement
+with the project transformation, not the correctness or necessity of a real
+response.
+
+\subsection{Decision Quality, Calibration, and Grounding}
+
+Routing uses fixed thresholds of 0.5 and is not calibrated. There is no
+abstention or referral option, no cost matrix, and no operational baseline such
+as dispatcher decisions. Temporal grounding relies on one shared attention
+mechanism and a fixed rule; attention was not trained with interval labels, no
+alternative grounding method or bag length was compared, and there is no spatial
+grounding of where in a frame an event occurs. Apart from the timing of one local dense-extraction batch
+and the number of trainable adapter parameters, computational cost was not
+measured, so the thesis makes no efficiency claim.
+
+\subsection{Representation and Reproducibility Boundaries}
+
+The retained Transformers 5.12.0 loader, which leaves 36 newly represented
+biases at zero (Section~\ref{sec:videomae-lora}; Appendix~\ref{app:repro-limits}),
+is a compatibility decision, not proof that every pretrained parameter was
+reconstructed faithfully, and the persisted \code{float16} prototypes
+approximate unavailable \code{float32} centers. The fixed identities and
+verification scripts make the named evidence auditable, and a fresh clone with
+the local evidence bundle passes the evidence verifiers. Raw videos, checkpoints,
+and feature stores remain local and Git-ignored, however, no external archive
+exists yet, and the sparse subset used a Python hash seed that was not recorded.
+Reproduction claims therefore remain conditional on the preserved local
+artifacts and their hashes.
+
+\subsection{Operational Scope}
+
+The evaluated path is offline: it reads stored clips or embeddings, loads fixed
+checkpoints, and writes saved CAD-style records. It has not been tested with live
+streams, multiple cameras, failures, or operational load, and there is no
+external CAD integration, operator study, security analysis, privacy control,
+fairness evaluation, or prospective safety evaluation.
+
+\section{Ethical Implications and Human Oversight}
+\label{sec:discussion-ethics}
+
+The points below are requirements derived from the measured failure modes, not
+capabilities of the prototype. Surveillance models can inherit harm at every
+stage of the machine-learning lifecycle \cite{suresh2021framework}. This project
+has no demographic attributes or subgroup evaluation, so it cannot measure
+whether errors differ between groups of people or places; work on facial
+analysis has shown that aggregate accuracy can hide large intersectional
+disparities \cite{buolamwini2018gender}. Video surveillance also creates privacy
+risks independent of accuracy, and data-protection guidance for video devices
+requires purpose limitation, necessity, transparency, retention limits, and
+access control \cite{edpb2020video}. None of these controls is evaluated here;
+any future data collection would need a lawful, context-specific governance
+process.
+
+False alarms and missed events cause different harms. The observed
+over-prediction could waste operator attention or prompt unnecessary
+escalation, especially of Police, and the base-rate argument above shows how
+quickly false alerts would accumulate. These costs differ between services and
+must be specified rather than assumed \cite{elkan2001foundations}; high recall is
+not an ethical justification for automatic dispatch.
+
+Human review is necessary but not sufficient. Decision aids can induce omission
+and commission errors \cite{mosier1998automation}, and in semi-automated CCTV,
+system confidence, accuracy, and task complexity affect operator reliance and
+workload \cite{dadashi2013semiautomated}. The response scores here are not
+calibrated confidences, and no operator study tested how they would be
+understood. A future interface should show the video context and the limits of
+the output, support verification and override, and distinguish ``no confident
+recommendation'' from ``no event''. Responsibility must remain with identifiable
+people and institutions, with documented roles, monitoring, and examination of
+error costs \cite{tabassi2023airmf}.
+
+\section{Future Work}
+\label{sec:discussion-future}
+
+Future work should address construct validity before optimizing the present
+scores. Emergency-response professionals should review the category-to-service
+mapping and define what a correct, incorrect, or abstained recommendation is;
+labels should then come from independently annotated or observed service needs.
+Routing should target precision directly, with calibrated channel scores, an
+abstention option, and cost-sensitive thresholds agreed with stakeholders, on
+new validation data rather than the inspected test split.
+
+The component questions left open here can be answered with the existing
+pipeline. A Stage-2 run on non-adapted features and a mean-pooling baseline
+would isolate LoRA and MIL; a linear probe on frozen and adapted features would
+test whether the categories are separable; a fine-tuned or different encoder
+would show whether the self-supervised checkpoint limits service selection; and
+event-only and non-event-only bags would test whether the binary decision relies
+on event content or on scene properties. A per-clip score from the binary head
+would also allow a clearly labeled frame-level AUC.
+
+Generalization should then be evaluated on an external dataset or site, or with
+a nested design in which all thresholds, mappings, and models are fixed before
+the outer test set is opened, with uncertainty over more than three
+whole-pipeline runs. Grounding should be studied as its own task, with
+interval-aware supervision, alternative interval rules, matched bag lengths, and
+spatial annotations where available. Only after these scientific and governance
+steps should a secure, monitored human-in-the-loop integration with external CAD
+systems be considered.
+
+In the longer term, the staged pipeline could serve as a starting point for AI-assisted CCTV monitoring, but the limiting factor is data rather than architecture. UCF-Crime offers 1,900 videos from uncontrolled sources, and its mapping from categories to services is a project rule. Benchmarks with more scenes and camera views, such as NWPU Campus (43 scenes, 28 event classes) \cite{cao2023new} and MSAD (14 scenarios under varied lighting and weather) \cite{zhu2024advancing}, would show whether the binary decision and the attention signal hold across sites, which UCF-Crime cannot test. A system for real places would also need recordings from the intended cameras, service labels assigned by operators, interval annotations for evaluation, and long continuous streams instead of curated clips, so that false alarms per hour of normal footage can be measured. The separation of stages helps here, because the frozen feature store, the prototype memory, the MIL heads, and the CAD-style record can each be replaced or re-evaluated on their own; whether the prototype and heads can be refitted on a new site's normal footage without retraining the encoder has not been tested. Live use would further require measured end-to-end latency (the stored alert latency in this thesis is a source-video timestamp, not a compute time), calibrated confidences, monitoring for drift between sites and seasons, and the governance and human-review safeguards discussed above. This thesis provides no evidence on any of these points; they describe what a foundation would have to be tested against.

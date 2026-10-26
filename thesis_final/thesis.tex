@@ -1,0 +1,172 @@
+% !TeX spellcheck = en_US
+% !TeX encoding = UTF-8
+
+% COMPILE WITH:
+% `latexmk`
+% You need lualatex and biber (in all TeXLive distributions)
+
+\documentclass[
+    numbers=noenddot,
+    %listof=totoc,
+    parskip=half-,
+    fontsize=12pt,
+    paper=a4,
+    oneside,
+    titlepage,
+    bibliography=totoc,
+    chapterprefix=false,
+    captions=tableheading,
+%    draft
+]{scrbook}
+
+% use lualatex or xelatex
+%\usepackage{fontspec}
+% Force real image rendering even if an editor recipe injects draft mode.
+\usepackage[final]{graphicx}
+\usepackage[onehalfspacing]{setspace}
+
+% better language support
+%\usepackage{polyglossia}
+%\setdefaultlanguage{english}
+%\setotherlanguage{german}
+
+\usepackage{tocbasic}
+\usepackage{booktabs}
+\usepackage{multicol}
+\usepackage{multirow}
+
+\usepackage[]{scrlayer-scrpage}
+
+% better bibliography (biblatex style)
+% use biber to compile
+\usepackage[citestyle=alphabetic, bibstyle=alphabetic, sorting=nyt, backend=biber, language=english, backref=true, maxcitenames=2]{biblatex}
+
+% better quotes
+% use \enquote{text}
+\usepackage[autostyle,english=american,german=quotes]{csquotes}
+\addbibresource{bibliography.bib}
+\appto\bibsetup{\emergencystretch=1em}
+
+% Float pages fill from the top instead of centering a lone figure or table.
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpsep}{8pt plus 2fil}
+\setlength{\@fpbot}{0pt plus 1fil}
+\makeatother
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.7}
+
+% appendix
+\usepackage[titletoc]{appendix}
+
+% Self-contained manuscript assets for local, Prism, and Overleaf builds.
+\graphicspath{{images/}}
+
+% YOUR PACKAGES
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{microtype}
+\usepackage{xurl}
+\usepackage{seqsplit}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\hashvalue}[2]{\texttt{\seqsplit{#1#2}}}
+\newcommand{\vect}[1]{\boldsymbol{#1}}
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false
+}
+
+% Registered title; personal and submission fields remain explicit blockers.
+\title{Weakly Supervised Video Anomaly Understanding with Parameter-Efficient Adaptation and Temporal Grounding for Emergency Response}
+
+% Author
+\author{Pranav Maheshwari}
+
+% Date
+% Compile date as DD.MM.YYYY; used on the title page and in the declaration.
+\date{\ifnum\day<10 0\fi\the\day.\ifnum\month<10 0\fi\the\month.\the\year}
+
+% CHOOSE ACCORDINGLY
+%\newcommand{\thesisType}{Bachelorarbeit}
+\newcommand{\thesisType}{Masterarbeit}
+
+\makeatletter
+\let\thetitle\@title
+\let\theauthor\@author
+\let\thedate\@date
+\makeatother
+
+\pagestyle{scrheadings}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\frontmatter
+% CHOOSE ACCORDINGLY
+%\include{includes/BA-titlepage}
+\include{includes/MA-titlepage}
+
+\tableofcontents
+\newpage
+
+% -- ABSTRACT
+\include{includes/abstract}
+\newpage
+
+% -- Acknowledgements
+\include{includes/acknowledgements}
+\newpage
+
+% -- List of figures
+\thispagestyle{empty}
+\cleardoublepage
+\listoffigures
+\newpage
+
+% -- List of tables
+\thispagestyle{empty}
+\cleardoublepage
+\listoftables
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\mainmatter
+
+% -- Chapters
+% following IMRaD structure
+% adjust for your liking
+\include{chapters/introduction}
+\include{chapters/background}
+\include{chapters/methods}
+\include{chapters/results}
+\include{chapters/discussion}
+\include{chapters/conclusion}
+
+% -- Appendix (optional)
+\begin{appendices}
+    \input{appendix.tex}
+\end{appendices}
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\backmatter
+
+% -- Bibliography
+\printbibliography
+
+% -- Eidesstattliche Erkl\"arung (= Affidavit)
+\include{includes/eidesstattlicheErklaerung}
+
+\end{document}

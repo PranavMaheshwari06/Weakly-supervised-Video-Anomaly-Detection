@@ -1,0 +1,186 @@
+% !TeX root = ../thesis.tex
+\chapter{Introduction}
+\label{chap:introduction}
+
+\section{Motivation}
+\label{sec:introduction-motivation}
+
+Long, untrimmed surveillance video presents a difficult allocation problem: most
+recorded time is routine, while events that warrant review may be brief, visually
+ambiguous, and separated by long periods of normal activity. Automated video
+analysis can help prioritize where a person looks, but an anomaly score alone is
+not an emergency-response decision. A useful research account must distinguish
+at least three questions: whether a video is anomalous, what kind of response a
+predefined label scheme associates with it, and where the supporting event occurs
+in time. Conflating these questions can make a strong detector appear to be a
+capable response system even when its service selection or temporal grounding is
+weak.
+
+UCF-Crime made this setting accessible at scale by collecting 1,900 long,
+untrimmed surveillance videos, including normal activity and 13 anomaly
+categories, and by defining both binary anomaly detection and anomalous-activity
+recognition tasks \cite{sultani2018real}. Its training supervision is available
+at video level rather than as clip-level event labels. This reduces the need for
+dense training annotation, but creates ambiguity: an anomalous video can contain
+many normal clips, and its category does not identify which clips depict the
+event. Weakly supervised video anomaly detection therefore has to learn from
+bags of temporally mixed evidence rather than from precisely labeled instances.
+
+The application framing raises a second difficulty. A camera record does not by
+itself specify whether Police, Medical, Fire, some other service, or no immediate
+service is appropriate. Such a decision depends on context that may not be
+visible in the video and on institutional, legal, and professional judgment.
+Research on semi-automated closed-circuit television (CCTV) has also shown that
+system accuracy, confidence information, task complexity, and interface design
+affect operator reliance and workload \cite{dadashi2013semiautomated}. For this
+reason, response-oriented outputs should be evaluated as decision-support
+signals with explicit human oversight, not presented as automatic dispatch.
+
+The goal of this thesis is to build and evaluate a weakly supervised pipeline
+that answers all three questions for UCF-Crime videos, and to measure each
+answer separately against simple references. In the registered title,
+\emph{understanding} therefore means three measurable outputs: a binary anomaly
+decision, a set of project-defined response labels, and the temporal alignment
+of attention with annotated events. \emph{Emergency response} names the
+application framing of an offline system; it is not an operationally validated
+capability.
+
+\section{Problem Statement and Research Gap}
+\label{sec:introduction-gap}
+
+Weakly supervised video anomaly detection is commonly formulated with multiple
+instance learning (MIL): a video is a bag, temporal snippets are instances, and
+only the bag label is known during training \cite{sultani2018real,tian2021weakly}.
+This formulation supports video-level learning and can produce snippet scores,
+but success at one level does not establish success at another. A high video
+area under the receiver operating characteristic curve (AUROC) does not
+guarantee balanced recognition of anomaly categories, selective
+multi-label response prediction, or accurate event boundaries. Likewise, a
+visually plausible attention trace is not automatically a calibrated anomaly
+probability or a faithful explanation of a decision.
+
+Three methodological strands are relevant but remain conceptually distinct.
+First, pretrained video representations can reduce the amount of task-specific
+learning required; VideoMAE learns spatio-temporal representations through
+masked video reconstruction \cite{tong2022videomae}. Low-rank adaptation (LoRA)
+offers a parameter-efficient way to adapt selected projections while leaving the
+pretrained weights frozen \cite{hu2021lora}. Second, MIL aggregation and
+normality-oriented memories can prioritize instances when only bag labels are
+available \cite{ilse2018attention,zhou2023ur}. Third, independent sigmoid outputs
+and imbalance-aware objectives support non-exclusive labels
+\cite{boutell2004learning,ridnik2021asymmetric}. Combining these elements in
+software is not itself evidence that each element is beneficial, nor that their
+outputs form a reliable integrated response system.
+
+Published weakly supervised methods on UCF-Crime are compared mainly through
+a single number, the frame-level AUC of an anomaly score
+(Section~\ref{sec:background-comparison}). Three things are rarely reported
+together with it: an output that states which services an event involves, a
+per-video measurement of where the event is placed in time, and a comparison
+of each learned output with a trivial rule on the same videos. Without such
+references, a strong detector can look like a capable response system without
+showing whether a rule that predicts every service after the same anomaly
+decision would do as well. This thesis addresses that evaluation gap. It implements one sequential
+pipeline that adapts a video encoder, freezes clip features, adds a
+normal-prototype distance, trains an attention MIL model with a binary head and
+three response channels, and renders an offline computer-aided dispatch
+(CAD)-style record. It then evaluates the binary, response, and temporal outputs
+separately, each against a matched reference, across repeated Stage-2 training.
+
+\section{Research Questions}
+\label{sec:introduction-rqs}
+
+The following four questions define the empirical scope of the thesis:
+
+\noindent\textbf{RQ1:} \emph{What video-level binary anomaly-detection
+performance does the sequential LoRA–\allowbreak prototype–\allowbreak MIL pipeline achieve on
+UCF-Crime under weak video-level supervision?}
+
+\noindent\textbf{RQ2:} \emph{On UCF-Crime, what limitations are evident in the
+reconciled historical 14-class predictions, and what error profile does the
+project-defined multi-label emergency-response formulation exhibit?}
+
+\noindent\textbf{RQ3:} \emph{How stable are binary and project-defined
+response-channel predictions across Stage-2 training seeds under fixed feature
+and evaluation artifacts on UCF-Crime, and how do matched response-label error
+metrics differ with and without binary gating?}
+
+\noindent\textbf{RQ4:} \emph{To what extent do the final checkpoints’ attention
+outputs align with annotated anomalous intervals under the dense indexed-video
+UCF-Crime evaluation protocol?}
+
+RQ2 also covers an earlier 14-class formulation of the same pipeline, which is
+reported as development history (Section~\ref{sec:results-historical}). RQ1
+concerns the complete sequential configuration as executed, while its
+reported variability is conditional on the frozen representation and prototype
+artifacts. RQ2 describes two non-equivalent tasks separately and does not define
+a before-and-after performance comparison. RQ3 treats gating as a matched
+computational transformation of response-label predictions, not as evidence of
+real dispatch effectiveness. RQ4 includes all three final checkpoints and uses
+attention only as a temporal saliency signal whose overlap with annotations must
+be measured.
+
+\section{Scope and Contributions}
+\label{sec:introduction-contributions}
+
+The work makes an implementation-and-evaluation contribution. It does not claim
+to invent VideoMAE, LoRA, MIL, attention pooling, asymmetric loss, or CAD. Its
+contributions are as follows:
+
+\begin{enumerate}
+    \item \textbf{A sequential weakly supervised implementation.} The pipeline
+    links video indexing and clip preparation, LoRA adaptation of VideoMAE,
+    frozen adapted features, a normal-prototype distance, guided bag
+    construction, and a shared-attention MIL model with a binary head and three
+    response channels. It also supports dense indexed evaluation and
+    deterministic offline CAD-style output. The stages are trained one after
+    another, not jointly from pixels.
+
+    \item \textbf{A separated evaluation design.} Historical 14-class outputs,
+    validation-only studies, fixed-bag test results, and dense indexed results
+    are reported separately. Fixed manifests, three Stage-2 seeds, per-video
+    records, matched populations, trivial baselines, and hash-identified local
+    artifacts keep positive and negative findings traceable.
+
+    \item \textbf{A matched characterization of system behavior.} The response
+    head is compared with predicting every service, with and without the same
+    binary gate. The attention signal is compared with whole-video, uniform,
+    random, and prototype-distance references, and alignment is measured per
+    video under near-complete indexed coverage. Two validation-only studies, one
+    on the prototype score with guided sampling and one on normal bags in the
+    response loss, support the reading of these comparisons.
+
+    \item \textbf{Explicit operational boundaries.} The thesis separates
+    derived response labels from observed emergency decisions, temporal saliency
+    from explanation, source-video timestamps from compute latency, and an
+    offline record from a live CAD connection. These limits define what the
+    evidence can support.
+\end{enumerate}
+
+The scope follows from these choices. UCF-Crime is used because it combines
+real surveillance footage, named incident categories, weak training labels, and
+annotated test intervals (Section~\ref{sec:background-tasks}). The Police,
+Medical, and Fire targets are deterministic project transformations of its
+categories, not observed service assignments. Only Stage-2 training is repeated
+across three seeds; the adapted feature store and prototype memory remain fixed.
+Temporal evaluation measures alignment with annotated intervals, not causal
+explanation or real-time localization. All conclusions are restricted to
+UCF-Crime, the fixed splits and artifacts, and the executed protocols; the work
+does not establish generalization to other sites, calibration, real-time
+throughput, human-factors performance, safety, or deployment readiness.
+
+\section{Thesis Structure}
+\label{sec:introduction-structure}
+
+Chapter~\ref{chap:background} develops the concepts needed to read the method
+and evidence: UCF-Crime supervision, task boundaries, MIL, video representation
+learning, LoRA, prototype guidance, attention pooling, multi-label prediction,
+gating, and temporal metrics, and closes with a comparison of related
+approaches. Chapter~\ref{chap:methods}
+specifies the implemented pipeline, data identities, objectives, evaluation
+paths, and reproducibility limits. Chapter~\ref{chap:results} reports the
+historical, fixed-bag, validation-only, dense indexed, and temporal results
+without extending them into deployment claims. Chapter~\ref{chap:discussion}
+answers RQ1--RQ4, interprets the error profiles, and addresses limitations,
+ethics, human oversight, and future work. Chapter~\ref{chap:conclusion}
+provides the final synthesis of the evidence and its bounded contribution.
