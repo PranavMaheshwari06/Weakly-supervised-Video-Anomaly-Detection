@@ -14,8 +14,25 @@ raw video ─► Stage 0   fixed splits and clip index (16 frames at 15 fps, str
 
 The stages are trained one after another. Gradients from Stage 2 never reach the video encoder.
 
+## Quick check
+
+Checking the reported results needs no GPU, no training and no UCF-Crime videos:
+
+```bash
+git clone https://github.com/PranavMaheshwari06/Weakly-supervised-Video-Anomaly-Detection.git
+cd Weakly-supervised-Video-Anomaly-Detection
+gh release download v1.1                 # or download both files from the v1.1 release page into this folder
+sha256sum -c SHA256SUMS && tar -xzf thesis-evidence-core-v1.tar.gz
+python3.12 -m venv venv && source venv/bin/activate && pip install -r requirements.txt
+export PYTHONPATH=.
+python -B utils/verify_thesis_evidence.py --skip-feature-stores    # ends with PASS
+```
+
+To run the trained model on one video, add that UCF-Crime video under `data/ucf_crime/raw/` and follow [Running the model on a UCF-Crime video](#running-the-model-on-a-ucf-crime-video). The checkpoints are in the bundle, so nothing has to be trained.
+
 ## Contents
 
+- [Quick check](#quick-check)
 - [Results](#results)
 - [Pipeline and thesis map](#pipeline-and-thesis-map)
 - [Repository layout](#repository-layout)
@@ -114,8 +131,8 @@ Configurations behind the reported runs:
 Tested on Ubuntu 24.04 (WSL2) with Python 3.12.3 and one NVIDIA RTX 4050 Laptop GPU (6 GB). Verification and single-video inference also run on CPU.
 
 ```bash
-git clone https://git.fim.uni-passau.de/maheshwari/pranav_master_thesis_115047.git
-cd pranav_master_thesis_115047
+git clone https://github.com/PranavMaheshwari06/Weakly-supervised-Video-Anomaly-Detection.git
+cd Weakly-supervised-Video-Anomaly-Detection
 python3.12 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -128,7 +145,7 @@ All commands below are run from the repository root with this environment active
 
 No large file is stored in Git.
 
-1. **Evidence bundle** (`thesis-evidence-core-v1.tar.gz`, 0.35 GB, about 0.5 GB unpacked). It is delivered separately from this repository, together with `SHA256SUMS`. Place both files at the repository root and unpack the archive there; it restores the original paths under `artifacts/`, `data/ucf_crime/` and `legacy/`, all of which Git ignores.
+1. **Evidence bundle** (`thesis-evidence-core-v1.tar.gz`, 0.35 GB, about 0.5 GB unpacked). It is attached to the [`v1.1` release of this repository](https://github.com/PranavMaheshwari06/Weakly-supervised-Video-Anomaly-Detection/releases/tag/v1.1) together with `SHA256SUMS`; the repository is private, so the download needs a GitHub account with access (or `gh release download v1.1`). Place both files at the repository root and unpack the archive there; it restores the original paths under `artifacts/`, `data/ucf_crime/` and `legacy/`, all of which Git ignores.
 
    ```bash
    sha256sum -c SHA256SUMS
