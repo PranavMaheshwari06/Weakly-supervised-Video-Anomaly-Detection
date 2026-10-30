@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite it as below."
+title: "Weakly Supervised Video Anomaly Understanding with Parameter-Efficient Adaptation and Temporal Grounding for Emergency Response"
+type: software
+authors:
+  - family-names: Maheshwari
+    given-names: Pranav
+year: 2026
+repository-code: "https://github.com/PranavMaheshwari06/Weakly-supervised-Video-Anomaly-Detection"
